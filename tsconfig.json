@@ -1,0 +1,76 @@
+{
+  "compilerOptions": {
+    "allowJs": false,
+    "allowSyntheticDefaultImports": true,
+    "checkJs": false,
+    "esModuleInterop": true,
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "paths": {
+      "#activate": [
+        "./src/activate.ts"
+      ],
+      "#artifacts": [
+        "./src/artifacts.ts"
+      ],
+      "#canonical": [
+        "./src/canonical.ts"
+      ],
+      "#client": [
+        "./src/client.ts"
+      ],
+      "#download": [
+        "./src/download.ts"
+      ],
+      "#fs": [
+        "./src/fs.ts"
+      ],
+      "#index": [
+        "./src/index.ts"
+      ],
+      "#manifest": [
+        "./src/manifest.ts"
+      ],
+      "#orchestrator": [
+        "./src/orchestrator.ts"
+      ],
+      "#paths": [
+        "./src/paths.ts"
+      ],
+      "#stage": [
+        "./src/stage.ts"
+      ],
+      "#types": [
+        "./src/types.ts"
+      ],
+      "#verify": [
+        "./src/verify.ts"
+      ],
+      "#test-helpers": [
+        "./test/specs/helpers.ts"
+      ]
+    },
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2020",
+    "types": [
+      "node",
+      "bun"
+    ]
+  },
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "tb.code-discipline.ts"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}

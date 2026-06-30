@@ -1,0 +1,87 @@
+{
+  "name": "@trebired/update",
+  "version": "0.1.0",
+  "description": "Generic update engine for distributed binaries, with manifest verification, artifact staging, safe activation, rollback, and primary-managed secondary orchestration.",
+  "license": "MIT",
+  "type": "module",
+  "private": false,
+  "packageManager": "bun@1.3.12",
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Trebired/update"
+  },
+  "homepage": "https://github.com/Trebired/update#readme",
+  "bugs": {
+    "url": "https://github.com/Trebired/update/issues"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "imports": {
+    "#activate": "./src/activate.ts",
+    "#artifacts": "./src/artifacts.ts",
+    "#canonical": "./src/canonical.ts",
+    "#client": "./src/client.ts",
+    "#download": "./src/download.ts",
+    "#fs": "./src/fs.ts",
+    "#index": "./src/index.ts",
+    "#manifest": "./src/manifest.ts",
+    "#orchestrator": "./src/orchestrator.ts",
+    "#paths": "./src/paths.ts",
+    "#stage": "./src/stage.ts",
+    "#types": "./src/types.ts",
+    "#verify": "./src/verify.ts",
+    "#test-helpers": "./test/specs/helpers.ts"
+  },
+  "files": [
+    "dist",
+    "CHANGELOG.md",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "update",
+    "updater",
+    "distributed-systems",
+    "binary-updates",
+    "orchestration",
+    "rollback",
+    "ed25519",
+    "node",
+    "bun"
+  ],
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "semver": "^7.7.3",
+    "tar-stream": "^3.1.7"
+  },
+  "devDependencies": {
+    "@trebired/code-discipline": "^2.1.1",
+    "@types/bun": "^1.3.4",
+    "@types/node": "^24.10.1",
+    "@types/semver": "^7.7.1",
+    "@types/tar-stream": "^3.1.4",
+    "typescript": "^6.0.2"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ./scripts/prepare-dist.mjs prepare-dist",
+    "postpack": "node ./scripts/prepare-dist.mjs postpack",
+    "prepack": "bun run build && node ./scripts/prepare-dist.mjs prepack",
+    "prepublishOnly": "bun run typecheck && bun test && bun run verify:pack",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "verify:pack": "node ./scripts/verify-pack.mjs"
+  }
+}

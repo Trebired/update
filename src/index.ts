@@ -1,11 +1,29 @@
 export { activateStagedArtifact, rollbackActivatedArtifact } from "#activate";
-export { inferArtifactFileName, normalizeArtifact, selectArtifact } from "#artifacts";
-export { createUpdateClient, applySecondaryUpdate, applySelfUpdate, planSelfUpdate } from "#client";
+export { inferArtifactFileName, normalizeArtifact, selectArtifact, selectArtifactForSubject } from "#artifacts";
+export { applySecondaryUpdate, applySelfUpdate, createUpdateClient, planSelfUpdate } from "#client";
 export { downloadArtifact } from "#download";
-export { fetchManifest, normalizeManifest } from "#manifest";
-export { createSecondaryUpdateInstruction, planSecondaryUpdate, verifySecondaryUpdateInstruction } from "#orchestrator";
-export { stageArtifact } from "#stage";
+export { fetchManifest, fetchManifestFromSources, normalizeManifest } from "#manifest";
 export {
+  collectRolloutAcknowledgements,
+  collectRolloutResults,
+  createRolloutInstructions,
+  createSecondaryUpdateInstruction,
+  createUpdateInstruction,
+  deliverRolloutInstructions,
+  planRollout,
+  planSecondaryUpdate,
+  summarizeRollout,
+  verifySecondaryUpdateInstruction,
+  verifyUpdateInstruction,
+} from "#orchestrator";
+export { createHostPackageInstaller, executePackageInstall } from "#package-install";
+export { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate, resumeUpdate } from "#runtime";
+export { createUpdateScheduler } from "#scheduler";
+export { stageArtifact } from "#stage";
+export { createFileUpdateJournalStore, createFileUpdateLockStore, createFileUpdateStateStore, withUpdateLock } from "#stores";
+export {
+  compareVersions,
+  evaluateUpdateCandidate,
   createDetachedSignature,
   hashFileSha256,
   validateInstalledVersion,

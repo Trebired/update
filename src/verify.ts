@@ -5,8 +5,10 @@ import semver from "semver";
 
 import { canonicalizeSignedPayload, stripSignatureField } from "#canonical";
 import type {
-  SecondaryUpdateInstruction,
+  EvaluateUpdateCandidateInput,
+  EvaluateUpdateCandidateResult,
   UpdateManifest,
+  UpdateInstruction,
   UpdateSignature,
   UpdateSigningKeyInput,
   UpdateVerificationKeyInput,
@@ -50,7 +52,7 @@ export function verifyManifestSignature(manifest: UpdateManifest, verificationKe
   });
 }
 
-export function verifyInstructionSignature(instruction: SecondaryUpdateInstruction, verificationKeys: UpdateVerificationKeyInput[]): void {
+export function verifyInstructionSignature(instruction: UpdateInstruction, verificationKeys: UpdateVerificationKeyInput[]): void {
   verifyDetachedSignature({
     payload: stripSignatureField(instruction),
     signature: instruction.signature,
@@ -90,26 +92,41 @@ export function verifyDetachedSignature(input: {
   throw new Error("Signature verification failed.");
 }
 
-export function validateVersionTransition(input: {
-  allowDowngrade?: boolean;
-  allowSameVersion?: boolean;
-  currentVersion: string;
-  minimumSupportedVersion?: string | null;
-  releaseVersion: string;
-}): void {
-  if (input.minimumSupportedVersion && compareVersions(input.currentVersion, input.minimumSupportedVersion) < 0) {
-    throw new Error(`Current version ${input.currentVersion} is below minimum supported ${input.minimumSupportedVersion}.`);
-  }
-
+export function evaluateUpdateCandidate(input: EvaluateUpdateCandidateInput): EvaluateUpdateCandidateResult {
+  const minimumComparison = input.minimumSupportedVersion
+    ? compareVersions(input.currentVersion, input.minimumSupportedVersion)
+    : 0;
   const comparison = compareVersions(input.currentVersion, input.releaseVersion);
 
-  if (comparison === 0 && !input.allowSameVersion) {
-    throw new Error(`Release version ${input.releaseVersion} matches the current version.`);
-  }
+  return {
+    comparison,
+    currentVersion: input.currentVersion,
+    minimumSupportedVersion: input.minimumSupportedVersion,
+    reason: comparison === 0
+      ? "already-current"
+      : comparison > 0 && !input.allowDowngrade
+        ? "downgrade-disallowed"
+        : undefined,
+    releaseVersion: input.releaseVersion,
+    shouldUpdate: comparison < 0 || (comparison === 0 && Boolean(input.allowSameVersion)) || (comparison > 0 && Boolean(input.allowDowngrade)),
+    assertAllowed() {
+      if (input.minimumSupportedVersion && minimumComparison < 0) {
+        throw new Error(`Current version ${input.currentVersion} is below minimum supported ${input.minimumSupportedVersion}.`);
+      }
 
-  if (comparison > 0 && !input.allowDowngrade) {
-    throw new Error(`Release version ${input.releaseVersion} is older than current version ${input.currentVersion}.`);
-  }
+      if (comparison === 0 && !input.allowSameVersion) {
+        throw new Error(`Release version ${input.releaseVersion} matches the current version.`);
+      }
+
+      if (comparison > 0 && !input.allowDowngrade) {
+        throw new Error(`Release version ${input.releaseVersion} is older than current version ${input.currentVersion}.`);
+      }
+    },
+  };
+}
+
+export function validateVersionTransition(input: EvaluateUpdateCandidateInput): void {
+  evaluateUpdateCandidate(input).assertAllowed();
 }
 
 export function validateInstalledVersion(actualVersion: string, expectedVersion: string): void {
@@ -118,7 +135,7 @@ export function validateInstalledVersion(actualVersion: string, expectedVersion:
   }
 }
 
-function compareVersions(left: string, right: string): number {
+export function compareVersions(left: string, right: string): number {
   const normalizedLeft = semver.valid(semver.coerce(left));
   const normalizedRight = semver.valid(semver.coerce(right));
 

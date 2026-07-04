@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { describe, expect, test } from "bun:test";
 
 import {
+  selectArtifactForSubject,
   selectArtifact,
   validateVersionTransition,
   verifyDownloadedArtifact,
@@ -43,6 +44,42 @@ describe("artifacts and verification", () => {
     });
 
     expect(selected.id).toBe("preferred");
+  });
+
+  test("selects without channel in the new core selector", () => {
+    const selected = selectArtifactForSubject({
+      version: 1,
+      entity: "secondary",
+      channel: "stable",
+      releaseVersion: "2.0.0",
+      recordedAt: "2026-06-30T12:00:00.000Z",
+      artifacts: [
+        createArtifact({
+          channel: "stable",
+          binaryPath: null,
+          checksum: { type: "sha256", value: "x" },
+        }),
+        createArtifact({
+          id: "channel-free",
+          channel: null,
+          binaryPath: "bin/app",
+          checksum: { type: "sha256", value: "y" },
+          fileName: "preferred.bin",
+        }),
+      ],
+      signature: {
+        type: "ed25519",
+        value: "sig",
+      },
+    }, {
+      entity: "secondary",
+      currentVersion: "1.0.0",
+      os: process.platform,
+      arch: process.arch,
+      installStrategy: "raw",
+    });
+
+    expect(selected.id).toBe("channel-free");
   });
 
   test("verifies sha256 checksums", async () => {

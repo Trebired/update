@@ -51,4 +51,28 @@ describe("manifest", () => {
     expect(result.manifest.artifacts[0].os).toBe(process.platform);
     verifyManifestSignature(result.manifest, [publicPem]);
   });
+
+  test("accepts channel-less manifests", async () => {
+    const { privateKey, publicKey } = createSigningPair();
+    const publicPem = publicKey.export({ format: "pem", type: "spki" }).toString();
+    const privatePem = privateKey.export({ format: "pem", type: "pkcs8" }).toString();
+    const manifest = createSignedManifest({
+      artifact: createArtifact({
+        checksum: {
+          type: "sha256",
+          value: "abc123",
+        },
+      }),
+      channel: null,
+      privateKeyPem: privatePem,
+    });
+
+    const result = await fetchManifest({
+      fetchImpl: async () => new Response(JSON.stringify(manifest), { status: 200 }),
+      manifestUrl: "https://updates.example.test/manifest.json",
+      verificationKeys: [publicPem],
+    });
+
+    expect(result.manifest.channel).toBeNull();
+  });
 });

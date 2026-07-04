@@ -1,10 +1,7 @@
-import { activateStagedArtifact } from "#activate";
-import { downloadArtifact, resolveAuthHeaders } from "#download";
-import { fetchManifest } from "#manifest";
-import { planSecondaryUpdate, verifySecondaryUpdateInstruction } from "#orchestrator";
-import { stageArtifact } from "#stage";
-import { selectArtifact } from "#artifacts";
-import { validateVersionTransition, verifyDownloadedArtifact } from "#verify";
+import { fetchManifestFromSources } from "#manifest";
+import { planRollout, planSecondaryUpdate, verifySecondaryUpdateInstruction } from "#orchestrator";
+import { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate } from "#runtime";
+import { createUpdateScheduler } from "#scheduler";
 import type {
   ApplySecondaryUpdateInput,
   ApplySecondaryUpdateResult,
@@ -26,7 +23,23 @@ export function createUpdateClient(config: UpdateClientConfig): UpdateClient {
       ...config,
       ...input,
     }),
+    applyUpdate: (input = {}) => applyUpdate({
+      ...config,
+      ...input,
+    }),
+    checkForUpdate: (input = {}) => checkForUpdate({
+      ...config,
+      ...input,
+    }),
+    createUpdateScheduler: (input) => createUpdateScheduler({
+      ...config,
+      ...input,
+    }),
     fetchManifest: () => fetchManifestForClient(config),
+    planRollout: async (input) => planRollout({
+      ...input,
+      verificationKeys: input.verificationKeys ?? config.verificationKeys,
+    }),
     planSecondaryUpdate: async (input) => planSecondaryUpdate({
       ...input,
       runtime: input.runtime ?? config,
@@ -40,81 +53,39 @@ export function createUpdateClient(config: UpdateClientConfig): UpdateClient {
 }
 
 export async function planSelfUpdate(input: PlanSelfUpdateInput): Promise<SelfUpdatePlan> {
-  const manifest = input.manifest ?? (await fetchManifestForClient(input)).manifest;
+  const result = await checkForUpdate(input);
 
-  if (manifest.entity !== input.entity || manifest.channel !== input.channel) {
-    throw new Error(`Manifest ${manifest.entity}/${manifest.channel} does not match runtime ${input.entity}/${input.channel}.`);
+  if (input.channel && result.manifest.channel && result.manifest.channel !== input.channel) {
+    throw new Error(`Manifest channel ${result.manifest.channel} does not match runtime ${input.channel}.`);
   }
-
-  if (input.currentVersion === manifest.releaseVersion) {
-    return {
-      artifact: null,
-      manifest,
-      reason: "already-current",
-      shouldUpdate: false,
-    };
-  }
-
-  validateVersionTransition({
-    allowDowngrade: input.allowDowngrade,
-    allowSameVersion: input.allowSameVersion,
-    currentVersion: input.currentVersion,
-    minimumSupportedVersion: manifest.minimumSupportedVersion,
-    releaseVersion: manifest.releaseVersion,
-  });
 
   return {
-    artifact: selectArtifact(manifest, input),
-    manifest,
-    shouldUpdate: true,
+    artifact: result.artifact,
+    manifest: result.manifest,
+    reason: result.reason,
+    shouldUpdate: result.shouldUpdate,
   };
 }
 
 export async function applySelfUpdate(input: ApplySelfUpdateInput): Promise<ApplySelfUpdateResult> {
-  if (!input.activationTarget) {
+  if (!input.activationTarget && input.installStrategy !== "deb" && input.installStrategy !== "rpm") {
     throw new Error("Self update requires activationTarget.");
   }
 
-  const plan = await planSelfUpdate(input);
-
-  if (!plan.shouldUpdate || !plan.artifact) {
-    throw new Error("No self update is available.");
-  }
-
-  const download = await downloadArtifact({
-    artifact: plan.artifact,
-    auth: input.auth,
-    fetchImpl: input.fetchImpl,
-    statusHandler: input.statusHandler,
-    workingDirectory: input.workingDirectory,
-  });
-  const verification = await verifyDownloadedArtifact({
-    artifact: plan.artifact,
-    filePath: download.filePath,
-  });
-  const stage = await stageArtifact({
-    artifact: plan.artifact,
-    download,
-    statusHandler: input.statusHandler,
-    workingDirectory: input.workingDirectory,
-  });
-  const activation = await activateStagedArtifact({
-    artifact: plan.artifact,
-    readInstalledVersion: input.readInstalledVersion,
-    releaseVersion: plan.manifest.releaseVersion,
-    restartHook: input.restartHook,
-    stage,
-    statusHandler: input.statusHandler,
-    target: input.activationTarget,
-    workingDirectory: input.workingDirectory,
-  });
+  const result = await applyUpdate(input);
 
   return {
-    activation,
-    download,
-    plan,
-    stage,
-    verification,
+    activation: result.activation,
+    download: result.download,
+    installation: result.installation,
+    plan: {
+      artifact: result.check.artifact,
+      manifest: result.check.manifest,
+      reason: result.check.reason,
+      shouldUpdate: result.check.shouldUpdate,
+    },
+    stage: result.stage,
+    verification: result.verification,
   };
 }
 
@@ -126,52 +97,130 @@ export async function applySecondaryUpdate(input: ApplySecondaryUpdateInput): Pr
     now: input.now,
     verificationKeys: input.verificationKeys,
   });
-  const download = await downloadArtifact({
-    artifact: verified.instruction.artifact,
-    auth: verified.instruction.downloadAuth ?? undefined,
-    fetchImpl: input.fetchImpl,
-    statusHandler: input.statusHandler,
-    workingDirectory: input.workingDirectory,
-  });
-  const verification = await verifyDownloadedArtifact({
-    artifact: verified.instruction.artifact,
-    filePath: download.filePath,
-  });
-  const stage = await stageArtifact({
-    artifact: verified.instruction.artifact,
-    download,
-    statusHandler: input.statusHandler,
-    workingDirectory: input.workingDirectory,
-  });
-  const activation = await activateStagedArtifact({
-    artifact: verified.instruction.artifact,
-    readInstalledVersion: input.readInstalledVersion,
+  const currentVersion = input.readInstalledVersion ? await input.readInstalledVersion() : "unknown";
+  const manifest = {
+    artifacts: [verified.instruction.artifact],
+    channel: null,
+    entity: verified.instruction.targetEntity,
+    minimumSupportedVersion: null,
+    notes: null,
+    recordedAt: verified.verifiedAt,
     releaseVersion: verified.instruction.releaseVersion,
-    restartHook: input.restartHook,
-    stage,
+    signature: verified.instruction.manifestSignature,
+    version: 1 as const,
+  };
+  const check = {
+    artifact: verified.instruction.artifact,
+    manifest,
+    operationId: verified.instruction.instructionId,
+    shouldUpdate: true,
+    snapshot: {
+      artifact: verified.instruction.artifact,
+      flow: "apply" as const,
+      manifest,
+      operationId: verified.instruction.instructionId,
+      phase: "update-selected" as const,
+      releaseVersion: verified.instruction.releaseVersion,
+      subject: {
+        arch: verified.instruction.artifact.arch,
+        currentVersion,
+        entity: verified.instruction.targetEntity,
+        installStrategy: verified.instruction.artifact.installStrategy,
+        os: verified.instruction.artifact.os,
+      },
+      updatedAt: verified.verifiedAt,
+      version: 1 as const,
+    },
+    sourceIndex: 0,
+    sourceUrl: verified.instruction.artifact.url,
+    subject: {
+      arch: verified.instruction.artifact.arch,
+      currentVersion,
+      entity: verified.instruction.targetEntity,
+      installStrategy: verified.instruction.artifact.installStrategy,
+      os: verified.instruction.artifact.os,
+    },
+  };
+
+  const prepared = await prepareUpdate({
+    activationTarget: input.target,
+    arch: verified.instruction.artifact.arch,
+    auth: verified.instruction.downloadAuth ?? undefined,
+    check,
+    currentVersion,
+    entity: verified.instruction.targetEntity,
+    fetchImpl: input.fetchImpl,
+    installStrategy: verified.instruction.artifact.installStrategy,
+    journalStore: input.journalStore,
+    lifecycleHandler: input.lifecycleHandler,
+    lockStore: input.lockStore,
+    manifest,
+    manifestUrl: verified.instruction.artifact.url,
+    operationId: verified.instruction.instructionId,
+    os: verified.instruction.artifact.os,
+    packageInstaller: input.packageInstaller,
+    readInstalledVersion: input.readInstalledVersion,
+    restartController: input.restartController,
+    restartHook: input.restartHook ? (context) => input.restartHook?.({
+      ...context,
+      mode: "secondary",
+    }) : undefined,
+    stateStore: input.stateStore,
+    statusHandler: input.statusHandler,
+    subject: check.subject,
+    verificationKeys: input.verificationKeys,
+    workingDirectory: input.workingDirectory,
+  });
+
+  const result = await applyPreparedUpdate({
+    activationTarget: input.target,
+    arch: verified.instruction.artifact.arch,
+    currentVersion: prepared.check.subject.currentVersion,
+    entity: verified.instruction.targetEntity,
+    installStrategy: verified.instruction.artifact.installStrategy,
+    journalStore: input.journalStore,
+    lifecycleHandler: input.lifecycleHandler,
+    lockStore: input.lockStore,
+    manifestUrl: input.instruction.artifact.url,
+    os: verified.instruction.artifact.os,
+    packageInstaller: input.packageInstaller,
+    prepared,
+    readInstalledVersion: input.readInstalledVersion,
+    restartController: input.restartController,
+    restartHook: input.restartHook ? (context) => input.restartHook?.({
+      ...context,
+      mode: "secondary",
+    }) : undefined,
+    stateStore: input.stateStore,
     statusHandler: input.statusHandler,
     target: input.target,
+    verificationKeys: input.verificationKeys,
     workingDirectory: input.workingDirectory,
   });
 
   return {
-    activation,
-    download,
-    instruction: verified.instruction,
-    stage,
-    verification,
+    activation: result.activation,
+    download: result.download,
+    installation: result.installation,
+    instruction: verified.instruction as ApplySecondaryUpdateResult["instruction"],
+    stage: result.stage,
+    verification: result.verification,
   };
 }
 
 async function fetchManifestForClient(config: UpdateClientConfig) {
-  return fetchManifest({
-    authHeader: await resolveAuthHeaders(config.auth, {
-      purpose: "manifest",
-      url: config.manifestUrl,
-    }),
+  const result = await fetchManifestFromSources({
     fetchImpl: config.fetchImpl,
-    manifestUrl: config.manifestUrl,
     normalization: config.normalization,
+    sources: config.manifestSources ?? [{
+      auth: config.auth,
+      url: config.manifestUrl,
+    }],
     verificationKeys: config.verificationKeys,
   });
+
+  return {
+    manifest: result.manifest,
+    responseHeaders: result.responseHeaders,
+  };
 }

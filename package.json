@@ -39,8 +39,12 @@
     "#index": "./src/index.ts",
     "#manifest": "./src/manifest.ts",
     "#orchestrator": "./src/orchestrator.ts",
+    "#package-install": "./src/package-install.ts",
     "#paths": "./src/paths.ts",
+    "#runtime": "./src/runtime.ts",
+    "#scheduler": "./src/scheduler.ts",
     "#stage": "./src/stage.ts",
+    "#stores": "./src/stores.ts",
     "#types": "./src/types.ts",
     "#verify": "./src/verify.ts",
     "#test-helpers": "./test/specs/helpers.ts"

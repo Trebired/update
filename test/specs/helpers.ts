@@ -19,7 +19,7 @@ export function createSigningPair() {
 
 export function createSignedManifest(input: {
   artifact: UpdateArtifact;
-  channel?: string;
+  channel?: string | null;
   entity?: string;
   minimumSupportedVersion?: string | null;
   privateKeyPem: string;
@@ -28,7 +28,7 @@ export function createSignedManifest(input: {
   const unsigned = {
     version: 1 as const,
     entity: input.entity ?? input.artifact.entity,
-    channel: input.channel ?? "stable",
+    channel: "channel" in input ? input.channel ?? null : "stable",
     releaseVersion: input.releaseVersion ?? "2.0.0",
     recordedAt: "2026-06-30T12:00:00.000Z",
     minimumSupportedVersion: input.minimumSupportedVersion ?? null,
@@ -55,6 +55,7 @@ export function createArtifact(input: Partial<UpdateArtifact> = {}): UpdateArtif
     archiveFormat: "archiveFormat" in input ? input.archiveFormat ?? null : null,
     binaryPath: "binaryPath" in input ? input.binaryPath ?? null : null,
     url: input.url ?? "https://updates.example.test/artifact.bin",
+    mirrors: "mirrors" in input ? input.mirrors ?? [] : undefined,
     checksum: input.checksum ?? {
       type: "sha256",
       value: "",

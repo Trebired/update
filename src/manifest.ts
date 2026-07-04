@@ -1,9 +1,13 @@
 import { normalizeArtifact } from "#artifacts";
+import { resolveAuthHeaders } from "#download";
 import { verifyManifestSignature } from "#verify";
 import type {
+  FetchManifestFromSourcesInput,
   FetchedManifest,
+  FetchedManifestSource,
   UpdateFetch,
   UpdateManifest,
+  UpdateManifestSource,
   UpdateNormalizationOptions,
   UpdateVerificationKeyInput,
 } from "#types";
@@ -26,26 +30,65 @@ export async function fetchManifest(input: {
   normalization?: UpdateNormalizationOptions;
   verificationKeys?: UpdateVerificationKeyInput[];
 }): Promise<FetchedManifest> {
-  const fetchImpl = input.fetchImpl ?? globalThis.fetch;
-  const response = await fetchImpl(input.manifestUrl, {
-    headers: input.authHeader ?? undefined,
+  const result = await fetchManifestFromSources({
+    fetchImpl: input.fetchImpl,
+    normalization: input.normalization,
+    sources: [{
+      auth: input.authHeader ? {
+        type: "headers",
+        headers: input.authHeader,
+      } : null,
+      url: input.manifestUrl,
+    }],
+    verificationKeys: input.verificationKeys,
   });
 
-  if (!response.ok) {
-    throw new Error(`Manifest request failed with status ${response.status}.`);
-  }
-
-  const raw = await response.json();
-  const manifest = normalizeManifest(raw, input.normalization);
-
-  if (input.verificationKeys?.length) {
-    verifyManifestSignature(manifest, input.verificationKeys);
-  }
-
   return {
-    manifest,
-    responseHeaders: response.headers,
+    manifest: result.manifest,
+    responseHeaders: result.responseHeaders,
   };
+}
+
+export async function fetchManifestFromSources(input: FetchManifestFromSourcesInput): Promise<FetchedManifestSource> {
+  const fetchImpl = input.fetchImpl ?? globalThis.fetch;
+  const sources = input.sources.map((source) => typeof source === "string"
+    ? { url: source, auth: null }
+    : source);
+  let lastError: Error | null = null;
+
+  for (const [index, source] of sources.entries()) {
+    try {
+      const response = await fetchImpl(source.url, {
+        headers: await resolveAuthHeaders(source.auth, {
+          purpose: "manifest",
+          url: source.url,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Manifest request failed with status ${response.status}.`);
+      }
+
+      const raw = await response.json();
+      const manifest = normalizeManifest(raw, input.normalization);
+
+      if (input.verificationKeys?.length) {
+        verifyManifestSignature(manifest, input.verificationKeys);
+      }
+
+      return {
+        manifest,
+        responseHeaders: response.headers,
+        sourceIndex: index,
+        sourceUrl: source.url,
+      };
+    }
+    catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+    }
+  }
+
+  throw lastError ?? new Error("No manifest sources were provided.");
 }
 
 export function normalizeManifest(raw: unknown, options: UpdateNormalizationOptions = {}): UpdateManifest {
@@ -63,7 +106,7 @@ export function normalizeManifest(raw: unknown, options: UpdateNormalizationOpti
   return {
     version: 1,
     entity,
-    channel: readString(record, aliases.channel ?? DEFAULT_MANIFEST_ALIASES.channel, allowAliases),
+    channel: readOptionalString(record, aliases.channel ?? DEFAULT_MANIFEST_ALIASES.channel, allowAliases),
     releaseVersion: readString(record, aliases.releaseVersion ?? DEFAULT_MANIFEST_ALIASES.releaseVersion, allowAliases),
     recordedAt: readString(record, aliases.recordedAt ?? DEFAULT_MANIFEST_ALIASES.recordedAt, allowAliases),
     minimumSupportedVersion: readOptionalString(record, aliases.minimumSupportedVersion ?? DEFAULT_MANIFEST_ALIASES.minimumSupportedVersion, allowAliases),

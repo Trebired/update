@@ -1,7 +1,13 @@
 import path from "node:path";
 
 import { sanitizeFileName } from "#paths";
-import type { UpdateArtifact, UpdateManifest, UpdateRuntimeTarget } from "#types";
+import type {
+  SelectArtifactOptions,
+  UpdateArtifact,
+  UpdateManifest,
+  UpdateRuntimeTarget,
+  UpdateSubject,
+} from "#types";
 
 export function normalizeArtifact(input: Record<string, unknown>, fallbackEntity: string, allowAliases = true): UpdateArtifact {
   const installStrategy = readString(input, ["installStrategy", "strategy", "kind"], allowAliases);
@@ -18,6 +24,7 @@ export function normalizeArtifact(input: Record<string, unknown>, fallbackEntity
     archiveFormat: archiveFormat as UpdateArtifact["archiveFormat"],
     binaryPath: readOptionalString(input, ["binaryPath", "binary"], allowAliases),
     url: readString(input, ["url", "downloadUrl"], allowAliases),
+    mirrors: readOptionalStringArray(input, ["mirrors", "mirrorUrls"], allowAliases) ?? undefined,
     checksum: normalizeChecksum(readRecord(input, ["checksum", "sha256"], allowAliases)),
     size: readOptionalNumber(input, ["size"], allowAliases),
     fileName: readOptionalString(input, ["fileName", "filename", "name"], allowAliases),
@@ -25,21 +32,28 @@ export function normalizeArtifact(input: Record<string, unknown>, fallbackEntity
 }
 
 export function selectArtifact(manifest: UpdateManifest, runtime: UpdateRuntimeTarget): UpdateArtifact {
+  return selectArtifactForSubject(manifest, runtime, {
+    channel: runtime.channel,
+    legacyChannelMatch: true,
+  });
+}
+
+export function selectArtifactForSubject(manifest: UpdateManifest, subject: UpdateSubject, options: SelectArtifactOptions = {}): UpdateArtifact {
   const matches = manifest.artifacts
-    .filter((artifact) => artifact.entity === runtime.entity)
-    .filter((artifact) => !artifact.channel || artifact.channel === runtime.channel)
-    .filter((artifact) => artifact.os === runtime.os)
-    .filter((artifact) => artifact.arch === runtime.arch)
-    .filter((artifact) => artifact.installStrategy === runtime.installStrategy);
+    .filter((artifact) => artifact.entity === subject.entity)
+    .filter((artifact) => !options.legacyChannelMatch || !artifact.channel || artifact.channel === (options.channel ?? null))
+    .filter((artifact) => artifact.os === subject.os)
+    .filter((artifact) => artifact.arch === subject.arch)
+    .filter((artifact) => artifact.installStrategy === subject.installStrategy);
 
   if (matches.length === 0) {
-    throw new Error(`No artifact matched entity ${runtime.entity} for ${runtime.os}/${runtime.arch}/${runtime.installStrategy}.`);
+    throw new Error(`No artifact matched entity ${subject.entity} for ${subject.os}/${subject.arch}/${subject.installStrategy}.`);
   }
 
-  const sorted = matches.sort((left, right) => scoreArtifact(right, runtime) - scoreArtifact(left, runtime));
+  const sorted = matches.sort((left, right) => scoreArtifact(right, options) - scoreArtifact(left, options));
 
-  if (sorted.length > 1 && scoreArtifact(sorted[0], runtime) === scoreArtifact(sorted[1], runtime)) {
-    throw new Error(`Multiple equally specific artifacts matched entity ${runtime.entity}.`);
+  if (sorted.length > 1 && scoreArtifact(sorted[0], options) === scoreArtifact(sorted[1], options)) {
+    throw new Error(`Multiple equally specific artifacts matched entity ${subject.entity}.`);
   }
 
   return sorted[0];
@@ -70,10 +84,10 @@ export function inferArtifactFileName(artifact: UpdateArtifact): string {
   return sanitizeFileName(`${artifact.entity}-${artifact.os}-${artifact.arch}-${artifact.id}${extension}`);
 }
 
-function scoreArtifact(artifact: UpdateArtifact, runtime: UpdateRuntimeTarget): number {
+function scoreArtifact(artifact: UpdateArtifact, options: SelectArtifactOptions): number {
   let score = 0;
 
-  if (artifact.channel === runtime.channel) {
+  if (options.legacyChannelMatch && artifact.channel && artifact.channel === (options.channel ?? null)) {
     score += 10;
   }
 
@@ -134,6 +148,17 @@ function readOptionalNumber(input: Record<string, unknown>, keys: string[], allo
     throw new Error(`Expected optional number field ${keys[0]}.`);
   }
   return value;
+}
+
+function readOptionalStringArray(input: Record<string, unknown>, keys: string[], allowAliases: boolean): string[] | null {
+  const value = readUnknown(input, keys, allowAliases, true);
+  if (value == null) {
+    return null;
+  }
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== "string" || entry.length === 0)) {
+    throw new Error(`Expected optional string[] field ${keys[0]}.`);
+  }
+  return value as string[];
 }
 
 function readUnknown(input: Record<string, unknown>, keys: string[], allowAliases: boolean, optional = false): unknown {

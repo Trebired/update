@@ -1,10 +1,10 @@
 # @trebired/update
 
-Generic update engine for distributed binaries, with strict manifest normalization, Ed25519 signature verification, SHA-256 artifact verification, safe staging, atomic-style activation, rollback support, and primary-managed secondary orchestration.
+Generic update runtime for distributed binaries and packages, with strict manifest normalization, signature verification, artifact verification, resumable downloads, staging, activation, rollback, persistence helpers, polling, and controller-managed rollout primitives.
 
 `@trebired/update` is intentionally product-agnostic.
 
-It does not know about any specific repository, forge, deployment panel, website, process manager, or UI framework. It gives hosts a reusable update core that can be embedded into different products and different topologies.
+It does not know about any specific repository, deployment system, service manager, transport, or UI. It provides reusable update building blocks plus a few strong high-level flows.
 
 ## Install
 
@@ -14,94 +14,60 @@ Runtime support: Bun 1+ and Node.js 18+.
 npm install @trebired/update
 ```
 
-## What It Covers
+## Layers
 
-- manifest fetching from a configured URL
-- strict manifest normalization into one canonical shape
-- Ed25519 signature verification for manifests and secondary instructions
-- artifact selection by entity, channel, OS, architecture, and install strategy
-- authenticated or public artifact downloads
-- SHA-256 checksum verification
-- staging for raw binaries, `.tar.gz`, and `.zip`
-- archive traversal rejection
-- activation with rollback preparation
-- primary-managed secondary instruction creation and verification
-- high-level self-update and secondary-update flows
+The package now exposes three adoption levels:
 
-## Core Types
+- low-level primitives
+- self-managed high-level flows
+- controller-managed multi-target rollout
 
-```ts
-type UpdateManifest = {
-  version: 1;
-  entity: string;
-  channel: string;
-  releaseVersion: string;
-  recordedAt: string;
-  minimumSupportedVersion?: string | null;
-  notes?: {
-    title?: string;
-    summary?: string;
-    url?: string;
-  } | null;
-  artifacts: UpdateArtifact[];
-  signature: {
-    type: "ed25519";
-    value: string;
-  };
-};
-
-type UpdateArtifact = {
-  id: string;
-  entity: string;
-  channel?: string | null;
-  os: string;
-  arch: string;
-  installStrategy: "raw" | "archive" | "deb" | "rpm";
-  archiveFormat?: "tar.gz" | "zip" | null;
-  binaryPath?: string | null;
-  url: string;
-  checksum: {
-    type: "sha256";
-    value: string;
-  };
-  size?: number | null;
-  fileName?: string | null;
-};
-
-type SecondaryUpdateInstruction = {
-  version: 1;
-  instructionId: string;
-  targetEntity: string;
-  targetInstanceId: string;
-  releaseVersion: string;
-  artifact: UpdateArtifact;
-  manifestSignature: {
-    type: "ed25519";
-    value: string;
-  };
-  downloadAuth?: {
-    type: "bearer";
-    token: string;
-  } | null;
-  issuedAt: string;
-  expiresAt: string;
-  signature: {
-    type: "ed25519";
-    value: string;
-  };
-};
-```
+Release channels are accepted as optional legacy metadata, but they are no longer required by the new core runtime, manifest, selection, or persisted-state flows.
 
 ## Self-Managed Flow
 
-Use the package directly from the running entity when it owns its own update lifecycle:
+Use `checkForUpdate`, `prepareUpdate`, `applyPreparedUpdate`, `applyUpdate`, `resumeUpdate`, and `createUpdateScheduler` when the updating process owns its own lifecycle:
 
 ```ts
-import { applySelfUpdate, createUpdateClient } from "@trebired/update";
+import { applyUpdate, createFileUpdateJournalStore, createFileUpdateStateStore } from "@trebired/update";
 
-const client = createUpdateClient({
+const workingDirectory = "/var/lib/my-service/update";
+
+const result = await applyUpdate({
   entity: "primary",
-  channel: "stable",
+  currentVersion: "1.4.0",
+  os: process.platform,
+  arch: process.arch,
+  installStrategy: "raw",
+  manifestUrl: "https://updates.example.test/primary/manifest.json",
+  workingDirectory,
+  verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
+  activationTarget: {
+    livePath: "/opt/my-service/bin/service",
+  },
+  stateStore: createFileUpdateStateStore({
+    directory: workingDirectory,
+  }),
+  journalStore: createFileUpdateJournalStore({
+    directory: workingDirectory,
+  }),
+  lifecycleHandler: (event) => {
+    console.log(event.type, event.operationId);
+  },
+});
+
+if (result.restartPending) {
+  // defer restart until your product decides to complete activation
+}
+```
+
+Built-in scheduler support is available when consumers want polling without custom timer glue:
+
+```ts
+import { createUpdateScheduler } from "@trebired/update";
+
+const scheduler = createUpdateScheduler({
+  entity: "primary",
   currentVersion: "1.4.0",
   os: process.platform,
   arch: process.arch,
@@ -109,122 +75,153 @@ const client = createUpdateClient({
   manifestUrl: "https://updates.example.test/primary/manifest.json",
   workingDirectory: "/var/lib/my-service/update",
   verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
-  activationTarget: {
-    livePath: "/opt/my-service/bin/service",
-  },
-  readInstalledVersion: async () => {
-    return process.env.CURRENT_BINARY_VERSION ?? "unknown";
-  },
+  intervalMs: 60_000,
+  mode: "check",
 });
 
-const plan = await client.planSelfUpdate();
-
-if (plan.shouldUpdate) {
-  await client.applySelfUpdate();
-}
+scheduler.start();
 ```
 
-You can also call the low-level steps independently:
+## Controller-Managed Rollout
+
+Use rollout planning and instruction helpers when a controller chooses artifacts for many targets while transports stay outside the library:
+
+```ts
+import {
+  createRolloutInstructions,
+  planRollout,
+  summarizeRollout,
+} from "@trebired/update";
+
+const plan = await planRollout({
+  manifestUrl: "https://updates.example.test/secondary/manifest.json",
+  verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
+  targets: [
+    {
+      targetId: "worker-1",
+      subject: {
+        entity: "secondary",
+        currentVersion: "1.0.0",
+        os: "linux",
+        arch: "x64",
+        installStrategy: "raw",
+      },
+    },
+  ],
+});
+
+const instructions = createRolloutInstructions({
+  instructionSigner: process.env.UPDATE_PRIVATE_KEY_PEM!,
+  manifest: plan.manifest,
+  plans: plan.targets,
+});
+
+const summary = summarizeRollout({
+  instructions,
+  plan,
+});
+```
+
+Delivery, acknowledgement collection, and apply-result collection are transport interfaces. The library defines the contracts but does not ship a transport.
+
+## Core Primitives
+
+Low-level consumers can compose the runtime directly:
 
 ```ts
 import {
   activateStagedArtifact,
+  checkForUpdate,
+  createFileUpdateLockStore,
   downloadArtifact,
-  fetchManifest,
-  selectArtifact,
+  executePackageInstall,
+  fetchManifestFromSources,
+  selectArtifactForSubject,
   stageArtifact,
   verifyDownloadedArtifact,
+  verifyUpdateInstruction,
+  withUpdateLock,
 } from "@trebired/update";
 ```
 
-That split is deliberate so existing product updaters can strip out bespoke internals step by step instead of rewriting every surrounding integration in one pass.
+Key capabilities:
 
-## Primary-Managed Secondary Flow
+- fallback manifest sources
+- optional channel-aware legacy selection plus channel-free core selection
+- resumable downloads and artifact mirrors
+- file-backed state, journal, and locking helpers
+- package install execution for `deb` and `rpm`
+- restart/deferred-activation hooks
+- update instruction creation and verification
+- batch rollout planning and summary types
 
-The primary side can fetch the manifest, choose the correct secondary artifact, and mint a signed instruction:
+## Compatibility Helpers
 
-```ts
-import {
-  createSecondaryUpdateInstruction,
-  planSecondaryUpdate,
-} from "@trebired/update";
+The previous surface remains available for incremental migration:
 
-const plan = await planSecondaryUpdate({
-  manifestUrl: "https://updates.example.test/secondary/manifest.json",
-  runtime: {
-    entity: "secondary",
-    channel: "stable",
-    currentVersion: "1.0.0",
-    os: "linux",
-    arch: "x64",
-    installStrategy: "raw",
-  },
-  targetEntity: "secondary",
-  targetInstanceId: "worker-17",
-  verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
-  instructionSigner: process.env.UPDATE_PRIVATE_KEY_PEM!,
-});
+- `fetchManifest`
+- `selectArtifact`
+- `planSelfUpdate`
+- `applySelfUpdate`
+- `planSecondaryUpdate`
+- `createSecondaryUpdateInstruction`
+- `verifySecondaryUpdateInstruction`
+- `applySecondaryUpdate`
+- `createUpdateClient`
 
-if (plan.instruction) {
-  // deliver over any transport your product owns
-}
-```
-
-The secondary side validates the instruction and performs the local update:
-
-```ts
-import { applySecondaryUpdate } from "@trebired/update";
-
-await applySecondaryUpdate({
-  instruction,
-  targetEntity: "secondary",
-  targetInstanceId: "worker-17",
-  verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
-  workingDirectory: "/var/lib/secondary/update",
-  target: {
-    livePath: "/opt/secondary/bin/worker",
-  },
-});
-```
-
-## Public API
-
-The package exposes the high-level surface below:
-
-```ts
-createUpdateClient(config)
-fetchManifest(config)
-selectArtifact(manifest, runtime)
-downloadArtifact(input)
-verifyDownloadedArtifact(input)
-stageArtifact(input)
-activateStagedArtifact(input)
-rollbackActivatedArtifact(input)
-createSecondaryUpdateInstruction(input)
-verifySecondaryUpdateInstruction(input)
-planSelfUpdate(input)
-planSecondaryUpdate(input)
-applySelfUpdate(input)
-applySecondaryUpdate(input)
-```
+These helpers now wrap the newer primitives and flows. Legacy channel-aware behavior remains available through those wrappers when a consumer still depends on it.
 
 ## Security Defaults
 
 - invalid manifest signatures are rejected
 - invalid instruction signatures are rejected
 - invalid SHA-256 checksums are rejected
-- archive entries with traversal segments are rejected
-- unsupported archive entry types are rejected
+- archive traversal is rejected
 - expired instructions are rejected
-- wrong target entity or instance instructions are rejected
-- target rollback state is preserved before replacement when a live target exists
+- minimum supported version rules are enforced consistently during planning and applying
+- duplicate concurrent check and apply executions can be locked out
+- rollback state is preserved before staged binary replacement
 
-## Notes On Extensibility
+## Public API
 
-The package intentionally keeps the core generic:
+High-level flows:
 
-- transport delivery is left to the consuming product
-- restart behavior is provided through hooks instead of systemd-specific code
-- manifest transport auth is configurable
-- file layout uses a caller-provided working directory
-- low-level steps remain callable on their own for incremental migration from existing updaters
+- `checkForUpdate`
+- `prepareUpdate`
+- `applyPreparedUpdate`
+- `applyUpdate`
+- `resumeUpdate`
+- `createUpdateScheduler`
+
+Controller rollout:
+
+- `planRollout`
+- `createRolloutInstructions`
+- `deliverRolloutInstructions`
+- `collectRolloutAcknowledgements`
+- `collectRolloutResults`
+- `summarizeRollout`
+
+Persistence and locking:
+
+- `createFileUpdateStateStore`
+- `createFileUpdateJournalStore`
+- `createFileUpdateLockStore`
+- `withUpdateLock`
+
+Instruction and evaluation primitives:
+
+- `createUpdateInstruction`
+- `verifyUpdateInstruction`
+- `evaluateUpdateCandidate`
+- `fetchManifestFromSources`
+- `selectArtifactForSubject`
+
+Download, install, and activation primitives:
+
+- `downloadArtifact`
+- `verifyDownloadedArtifact`
+- `stageArtifact`
+- `executePackageInstall`
+- `activateStagedArtifact`
+- `rollbackActivatedArtifact`

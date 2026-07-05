@@ -5,12 +5,14 @@
     "": {
       "name": "@trebired/update",
       "dependencies": {
+        "@trebired/logger-adapter": "^0.2.2",
+        "@trebired/result": "^0.2.0",
         "fflate": "^0.8.2",
         "semver": "^7.7.3",
         "tar-stream": "^3.1.7",
       },
       "devDependencies": {
-        "@trebired/code-discipline": "^2.1.1",
+        "@trebired/code-discipline": "^3.1.1",
         "@types/bun": "^1.3.4",
         "@types/node": "^24.10.1",
         "@types/semver": "^7.7.1",
@@ -20,9 +22,11 @@
     },
   },
   "packages": {
-    "@trebired/code-discipline": ["@trebired/code-discipline@2.2.0", "", { "dependencies": { "@trebired/code-discipline": ".", "@trebired/logger-adapter": "^0.2.0", "typescript": "^6.0.2" }, "bin": { "code-discipline": "dist/cli.js" } }, "sha512-Y2BCwLlf13NuHzCy6UBEgr5vwsZY18Phq+O3rmTTN5bsHpcyN/ubIAALUt/KGEYCLpxNiUKRGkJXAkm3nkL7Vg=="],
+    "@trebired/code-discipline": ["@trebired/code-discipline@3.1.1", "", { "dependencies": { "@trebired/logger-adapter": "^0.2.0", "typescript": "^6.0.2" }, "bin": { "code-discipline": "dist/cli.js" } }, "sha512-Ruri/ozryVDnV8bbSLtsQqsvcDmuW2zFWx1t+/oKmToyTnMQZkQN0xkXvnx3bkYmHWCAD+RkaiUY6GowcLPZuw=="],
 
     "@trebired/logger-adapter": ["@trebired/logger-adapter@0.2.2", "", {}, "sha512-8FurbitdICfB8Y5LmY1ucZesw5H0V1SVS1Um3ZqQHyyU2+5SHNlS6jhPSE34y53mAvYExCgriCj1r/5lG3UoWQ=="],
+
+    "@trebired/result": ["@trebired/result@0.2.0", "", { "dependencies": { "@trebired/logger-adapter": "^0.2.2" } }, "sha512-SRs5GZAqtmLsJqdNWaHIgWUH5fdonnQvb4bR4af/elDtPwESU7G3crQdQF3RJeFvWMhRZHjJmZTifWDm8JFMvQ=="],
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
@@ -67,7 +71,5 @@
     "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
-
-    "@trebired/code-discipline/@trebired/code-discipline": ["@trebired/code-discipline@file:.", {}],
   }
 }

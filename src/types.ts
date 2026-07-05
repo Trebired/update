@@ -1,10 +1,25 @@
 import type { KeyObject } from "node:crypto";
+import type { ResultLike } from "@trebired/result";
+import type {
+  LoggerAdapterEvent,
+  LoggerAdapterGenericLogMethod,
+  LoggerAdapterLogger,
+  LoggerAdapterLogMethod,
+  LoggerAdapterWriter,
+  NormalizedLoggerAdapter,
+} from "@trebired/logger-adapter";
 
 export type UpdateRole = "primary" | "secondary";
 export type UpdateInstallStrategy = "raw" | "archive" | "deb" | "rpm";
 export type UpdateArchiveFormat = "tar.gz" | "zip";
 export type UpdateStatusLevel = "debug" | "info" | "warn" | "error";
 export type UpdateOperationMode = "self" | "secondary";
+export type UpdateLogMethod = LoggerAdapterLogMethod;
+export type UpdateLogEvent = LoggerAdapterEvent;
+export type UpdateGenericLogMethod = LoggerAdapterGenericLogMethod;
+export type UpdateLogger = LoggerAdapterLogger;
+export type UpdateLoggerAdapter = LoggerAdapterWriter;
+export type NormalizedUpdateLogger = NormalizedLoggerAdapter;
 export type UpdateSignature = {
   type: "ed25519";
   value: string;
@@ -159,6 +174,7 @@ export type UpdateStatusEvent = {
   level: UpdateStatusLevel;
   message: string;
   context?: Record<string, unknown>;
+  result?: ResultLike;
 };
 
 export type UpdateStatusHandler = (event: UpdateStatusEvent) => void | Promise<void>;
@@ -293,6 +309,8 @@ export type UpdateClientConfig = UpdateRuntimeTarget & {
   readInstalledVersion?: UpdateVersionReader;
   restartHook?: UpdateRestartHook;
   restartController?: UpdateRestartController;
+  logger?: UpdateLogger;
+  loggerAdapter?: UpdateLoggerAdapter;
   statusHandler?: UpdateStatusHandler;
   lifecycleHandler?: UpdateLifecycleHandler;
   stateStore?: UpdateStateStore;

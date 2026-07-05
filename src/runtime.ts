@@ -1,9 +1,11 @@
 import { randomUUID } from "node:crypto";
+import { result } from "@trebired/result";
 
 import { activateStagedArtifact, rollbackActivatedArtifact } from "#activate";
 import { selectArtifactForSubject } from "#artifacts";
 import { downloadArtifact } from "#download";
 import { ensureRemoved } from "#fs";
+import { resolveLogger } from "./logging.js";
 import { fetchManifestFromSources } from "#manifest";
 import { executePackageInstall } from "#package-install";
 import { stageArtifact } from "#stage";
@@ -540,7 +542,7 @@ async function saveSnapshot(input: Pick<UpdateClientConfig, "stateStore">, snaps
 }
 
 async function emitLifecycle(
-  input: Pick<UpdateClientConfig, "journalStore" | "lifecycleHandler" | "statusHandler">,
+  input: Pick<UpdateClientConfig, "journalStore" | "lifecycleHandler" | "logger" | "loggerAdapter" | "statusHandler">,
   event: UpdateLifecycleEvent,
 ): Promise<void> {
   const at = new Date().toISOString();
@@ -550,8 +552,33 @@ async function emitLifecycle(
   });
   await input.lifecycleHandler?.(event);
 
+  const statusEvent: import("#types").UpdateStatusEvent = toStatusEvent(event);
   if (input.statusHandler) {
-    await input.statusHandler(toStatusEvent(event));
+    await input.statusHandler(statusEvent);
+  }
+
+  if (input.logger || input.loggerAdapter) {
+    const logger = resolveLogger(input.logger, input.loggerAdapter);
+    const metadata = statusEvent.context
+      ? {
+          ...statusEvent.context,
+          result: statusEvent.result,
+        }
+      : {
+          result: statusEvent.result,
+        };
+
+    if (statusEvent.level === "error") {
+      logger.fail("update", statusEvent.message, metadata);
+      return;
+    }
+
+    if (statusEvent.level === "warn") {
+      logger.warn("update", statusEvent.message, metadata);
+      return;
+    }
+
+    logger.info("update", statusEvent.message, metadata);
   }
 }
 
@@ -721,26 +748,105 @@ function requiredActivationTarget(input: ApplyPreparedUpdateInput) {
   return input.target ?? input.activationTarget!;
 }
 
-function toStatusEvent(event: UpdateLifecycleEvent) {
+function toStatusEvent(event: UpdateLifecycleEvent): import("#types").UpdateStatusEvent {
   switch (event.type) {
     case "check.started":
-      return { code: event.type, level: "info" as const, message: "Update check started.", context: { operationId: event.operationId } };
+      return {
+        code: event.type,
+        level: "info" as const,
+        message: "Update check started.",
+        context: { operationId: event.operationId },
+        result: result.ok("Update check started.", {
+          data: {
+            operationId: event.operationId,
+          },
+        }),
+      };
     case "manifest.fetched":
-      return { code: event.type, level: "info" as const, message: "Manifest fetched.", context: { operationId: event.operationId, sourceUrl: event.sourceUrl } };
+      return {
+        code: event.type,
+        level: "info" as const,
+        message: "Manifest fetched.",
+        context: { operationId: event.operationId, sourceUrl: event.sourceUrl },
+        result: result.ok("Update manifest fetched.", {
+          data: {
+            operationId: event.operationId,
+            sourceUrl: event.sourceUrl,
+          },
+        }),
+      };
     case "update.available":
-      return { code: event.type, level: "info" as const, message: "Update available.", context: { artifactId: event.artifact.id, operationId: event.operationId } };
+      return {
+        code: event.type,
+        level: "info" as const,
+        message: "Update available.",
+        context: { artifactId: event.artifact.id, operationId: event.operationId },
+        result: result.ok("Update available.", {
+          data: {
+            artifactId: event.artifact.id,
+            operationId: event.operationId,
+          },
+        }),
+      };
     case "no.update":
-      return { code: event.type, level: "info" as const, message: "No update available.", context: { operationId: event.operationId, reason: event.reason } };
+      return {
+        code: event.type,
+        level: "info" as const,
+        message: "No update available.",
+        context: { operationId: event.operationId, reason: event.reason },
+        result: result.noop("no-update", "No update is available.", {
+          data: {
+            operationId: event.operationId,
+          },
+          details: {
+            reason: event.reason,
+          },
+        }),
+      };
     case "apply.started":
-      return { code: event.type, level: "info" as const, message: "Apply started.", context: { artifactId: event.artifact.id, operationId: event.operationId } };
+      return {
+        code: event.type,
+        level: "info" as const,
+        message: "Apply started.",
+        context: { artifactId: event.artifact.id, operationId: event.operationId },
+        result: result.ok("Update apply started.", {
+          data: {
+            artifactId: event.artifact.id,
+            operationId: event.operationId,
+          },
+        }),
+      };
     case "stage.failed":
     case "activate.failed":
     case "rollback.failed":
     case "cleanup.failed":
     case "apply.failed":
-      return { code: event.type, level: "error" as const, message: event.type, context: { error: event.error?.message, operationId: event.operationId } };
+      return {
+        code: event.type,
+        level: "error" as const,
+        message: event.type,
+        context: { error: event.error?.message, operationId: event.operationId },
+        result: result.internal(event.type, event.type, {
+          data: {
+            operationId: event.operationId,
+          },
+          details: {
+            error: event.error?.message,
+          },
+        }),
+      };
     default:
-      return { code: event.type, level: "info" as const, message: event.type, context: { operationId: event.operationId } };
+      return {
+        code: event.type,
+        level: "info" as const,
+        message: event.type,
+        context: { operationId: event.operationId },
+        result: result.ok(event.type, {
+          data: {
+            operationId: event.operationId,
+          },
+        }),
+      };
   }
 }
 

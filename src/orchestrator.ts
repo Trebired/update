@@ -109,26 +109,8 @@ export function verifySecondaryUpdateInstruction(input: InstructionValidationInp
 }
 
 export async function planSecondaryUpdate(input: PlanSecondaryUpdateInput): Promise<SecondaryUpdatePlan> {
-  const fetched = input.manifest
-    ? {
-      manifest: input.manifest,
-      sourceUrl: input.manifestUrl ?? "",
-    }
-    : await fetchManifestFromSources({
-      fetchImpl: input.fetchImpl,
-      normalization: input.normalization,
-      sources: input.manifestSources ?? [input.manifestUrl!],
-      verificationKeys: input.verificationKeys,
-    });
-  const manifest = fetched.manifest;
-
-  if (manifest.entity !== input.runtime.entity) {
-    throw new Error(`Manifest ${manifest.entity} does not match runtime ${input.runtime.entity}.`);
-  }
-
-  if (input.runtime.channel && manifest.channel && manifest.channel !== input.runtime.channel) {
-    throw new Error(`Manifest channel ${manifest.channel} does not match runtime ${input.runtime.channel}.`);
-  }
+  const manifest = await resolvePlanningManifest(input);
+  validateSecondaryManifest(input, manifest);
 
   const evaluation = evaluateUpdateCandidate({
     allowDowngrade: input.allowDowngrade,
@@ -149,93 +131,18 @@ export async function planSecondaryUpdate(input: PlanSecondaryUpdateInput): Prom
   }
 
   evaluation.assertAllowed();
-
   const artifact = selectArtifact(manifest, input.runtime);
-
-  return {
-    artifact,
-    instruction: input.instructionSigner
-      ? createSecondaryUpdateInstruction({
-        artifact,
-        expiresAt: input.expiresAt ?? new Date((input.now?.() ?? new Date()).getTime() + 15 * 60_000).toISOString(),
-        manifestSignature: manifest.signature,
-        releaseVersion: manifest.releaseVersion,
-        signer: input.instructionSigner,
-        targetEntity: input.targetEntity,
-        targetInstanceId: input.targetInstanceId,
-      })
-      : null,
-    manifest,
-    shouldUpdate: true,
-  };
+  return createSecondaryPlan(input, manifest, artifact);
 }
 
 export async function planRollout(input: PlanRolloutInput): Promise<RolloutPlan> {
-  const fetched = input.manifest
-    ? {
-      manifest: input.manifest,
-    }
-    : await fetchManifestFromSources({
-      fetchImpl: input.fetchImpl,
-      normalization: input.normalization,
-      sources: input.manifestSources ?? [input.manifestUrl!],
-      verificationKeys: input.verificationKeys,
-    });
-  const manifest = fetched.manifest;
-  const targets = input.targets.map<TargetRolloutPlan>((target) => {
-    if (target.subject.entity !== manifest.entity) {
-      return {
-        reason: `Manifest entity ${manifest.entity} does not match target entity ${target.subject.entity}.`,
-        status: "blocked",
-        targetId: target.targetId,
-      };
-    }
-
-    try {
-      const evaluation = evaluateUpdateCandidate({
-        allowDowngrade: input.allowDowngrade,
-        allowSameVersion: input.allowSameVersion,
-        currentVersion: target.subject.currentVersion,
-        minimumSupportedVersion: manifest.minimumSupportedVersion,
-        releaseVersion: manifest.releaseVersion,
-      });
-
-      if (evaluation.reason === "already-current" && !evaluation.shouldUpdate) {
-        return {
-          reason: evaluation.reason ?? "already-current",
-          status: "no-update",
-          targetId: target.targetId,
-        };
-      }
-
-      evaluation.assertAllowed();
-
-      return {
-        artifact: selectArtifactForSubject(manifest, target.subject),
-        status: "ready",
-        targetId: target.targetId,
-      };
-    }
-    catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      return {
-        reason: message,
-        status: /matched entity|equally specific/u.test(message) ? "selection-failed" : "blocked",
-        targetId: target.targetId,
-      };
-    }
-  });
+  const manifest = await resolvePlanningManifest(input);
+  const targets = input.targets.map((target) => planRolloutTarget(input, manifest, target));
 
   return {
     manifest,
     rolloutId: input.rolloutId ?? randomUUID(),
-    summary: {
-      blocked: targets.filter((target) => target.status === "blocked").length,
-      noUpdate: targets.filter((target) => target.status === "no-update").length,
-      ready: targets.filter((target) => target.status === "ready").length,
-      selectionFailed: targets.filter((target) => target.status === "selection-failed").length,
-      total: targets.length,
-    },
+    summary: summarizeRolloutTargets(targets),
     targets,
   };
 }
@@ -321,5 +228,110 @@ export function summarizeRollout(input: SummarizeRolloutInput): BatchRolloutResu
       total: targets.length,
     },
     targets,
+  };
+}
+
+async function resolvePlanningManifest(input: Pick<PlanSecondaryUpdateInput | PlanRolloutInput, "fetchImpl" | "manifest" | "manifestSources" | "manifestUrl" | "normalization" | "verificationKeys">) {
+  if (input.manifest) {
+    return input.manifest;
+  }
+
+  const fetched = await fetchManifestFromSources({
+    fetchImpl: input.fetchImpl,
+    normalization: input.normalization,
+    sources: input.manifestSources ?? [input.manifestUrl!],
+    verificationKeys: input.verificationKeys,
+  });
+
+  return fetched.manifest;
+}
+
+function validateSecondaryManifest(input: PlanSecondaryUpdateInput, manifest: SecondaryUpdatePlan["manifest"]) {
+  if (manifest.entity !== input.runtime.entity) {
+    throw new Error(`Manifest ${manifest.entity} does not match runtime ${input.runtime.entity}.`);
+  }
+
+  if (input.runtime.channel && manifest.channel && manifest.channel !== input.runtime.channel) {
+    throw new Error(`Manifest channel ${manifest.channel} does not match runtime ${input.runtime.channel}.`);
+  }
+}
+
+function createSecondaryPlan(
+  input: PlanSecondaryUpdateInput,
+  manifest: SecondaryUpdatePlan["manifest"],
+  artifact: NonNullable<SecondaryUpdatePlan["artifact"]>,
+): SecondaryUpdatePlan {
+  return {
+    artifact,
+    instruction: input.instructionSigner
+      ? createSecondaryUpdateInstruction({
+        artifact,
+        expiresAt: resolveInstructionExpiry(input),
+        manifestSignature: manifest.signature,
+        releaseVersion: manifest.releaseVersion,
+        signer: input.instructionSigner,
+        targetEntity: input.targetEntity,
+        targetInstanceId: input.targetInstanceId,
+      })
+      : null,
+    manifest,
+    shouldUpdate: true,
+  };
+}
+
+function resolveInstructionExpiry(input: PlanSecondaryUpdateInput) {
+  return input.expiresAt ?? new Date((input.now?.() ?? new Date()).getTime() + 15 * 60_000).toISOString();
+}
+
+function planRolloutTarget(input: PlanRolloutInput, manifest: RolloutPlan["manifest"], target: PlanRolloutInput["targets"][number]): TargetRolloutPlan {
+  if (target.subject.entity !== manifest.entity) {
+    return {
+      reason: `Manifest entity ${manifest.entity} does not match target entity ${target.subject.entity}.`,
+      status: "blocked",
+      targetId: target.targetId,
+    };
+  }
+
+  try {
+    const evaluation = evaluateUpdateCandidate({
+      allowDowngrade: input.allowDowngrade,
+      allowSameVersion: input.allowSameVersion,
+      currentVersion: target.subject.currentVersion,
+      minimumSupportedVersion: manifest.minimumSupportedVersion,
+      releaseVersion: manifest.releaseVersion,
+    });
+
+    if (evaluation.reason === "already-current" && !evaluation.shouldUpdate) {
+      return {
+        reason: evaluation.reason ?? "already-current",
+        status: "no-update",
+        targetId: target.targetId,
+      };
+    }
+
+    evaluation.assertAllowed();
+    return {
+      artifact: selectArtifactForSubject(manifest, target.subject),
+      status: "ready",
+      targetId: target.targetId,
+    };
+  }
+  catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      reason: message,
+      status: /matched entity|equally specific/u.test(message) ? "selection-failed" : "blocked",
+      targetId: target.targetId,
+    };
+  }
+}
+
+function summarizeRolloutTargets(targets: TargetRolloutPlan[]) {
+  return {
+    blocked: targets.filter((target) => target.status === "blocked").length,
+    noUpdate: targets.filter((target) => target.status === "no-update").length,
+    ready: targets.filter((target) => target.status === "ready").length,
+    selectionFailed: targets.filter((target) => target.status === "selection-failed").length,
+    total: targets.length,
   };
 }

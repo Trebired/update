@@ -12,29 +12,15 @@ import {
 import { createArtifact, createTempDir } from "#test-helpers";
 
 describe("artifacts and verification", () => {
+  registerSpecificArtifactSelectionTest();
+  registerChannelFreeSelectionTest();
+  registerChecksumVerificationTest();
+  registerMinimumSupportedVersionTest();
+});
+
+function registerSpecificArtifactSelectionTest() {
   test("selects the most specific matching artifact", () => {
-    const selected = selectArtifact({
-      version: 1,
-      entity: "secondary",
-      channel: "stable",
-      releaseVersion: "2.0.0",
-      recordedAt: "2026-06-30T12:00:00.000Z",
-      artifacts: [
-        createArtifact({
-          channel: null,
-          checksum: { type: "sha256", value: "x" },
-        }),
-        createArtifact({
-          id: "preferred",
-          checksum: { type: "sha256", value: "y" },
-          fileName: "preferred.bin",
-        }),
-      ],
-      signature: {
-        type: "ed25519",
-        value: "sig",
-      },
-    }, {
+    const selected = selectArtifact(createSelectionManifest(), {
       entity: "secondary",
       channel: "stable",
       currentVersion: "1.0.0",
@@ -45,33 +31,11 @@ describe("artifacts and verification", () => {
 
     expect(selected.id).toBe("preferred");
   });
+}
 
+function registerChannelFreeSelectionTest() {
   test("selects without channel in the new core selector", () => {
-    const selected = selectArtifactForSubject({
-      version: 1,
-      entity: "secondary",
-      channel: "stable",
-      releaseVersion: "2.0.0",
-      recordedAt: "2026-06-30T12:00:00.000Z",
-      artifacts: [
-        createArtifact({
-          channel: "stable",
-          binaryPath: null,
-          checksum: { type: "sha256", value: "x" },
-        }),
-        createArtifact({
-          id: "channel-free",
-          channel: null,
-          binaryPath: "bin/app",
-          checksum: { type: "sha256", value: "y" },
-          fileName: "preferred.bin",
-        }),
-      ],
-      signature: {
-        type: "ed25519",
-        value: "sig",
-      },
-    }, {
+    const selected = selectArtifactForSubject(createChannelFreeManifest(), {
       entity: "secondary",
       currentVersion: "1.0.0",
       os: process.platform,
@@ -81,7 +45,9 @@ describe("artifacts and verification", () => {
 
     expect(selected.id).toBe("channel-free");
   });
+}
 
+function registerChecksumVerificationTest() {
   test("verifies sha256 checksums", async () => {
     const workingDirectory = await createTempDir("update-verify");
     const filePath = path.join(workingDirectory, "artifact.bin");
@@ -103,7 +69,9 @@ describe("artifacts and verification", () => {
     expect(result.sha256).toBe(sha256);
     expect(result.bytesRead).toBe(content.length);
   });
+}
 
+function registerMinimumSupportedVersionTest() {
   test("rejects versions below the minimum supported floor", () => {
     expect(() => validateVersionTransition({
       currentVersion: "1.0.0",
@@ -111,4 +79,57 @@ describe("artifacts and verification", () => {
       releaseVersion: "2.0.0",
     })).toThrow(/minimum supported/i);
   });
-});
+}
+
+function createSelectionManifest() {
+  return {
+    version: 1 as const,
+    entity: "secondary",
+    channel: "stable",
+    releaseVersion: "2.0.0",
+    recordedAt: "2026-06-30T12:00:00.000Z",
+    artifacts: [
+      createArtifact({
+        channel: null,
+        checksum: { type: "sha256", value: "x" },
+      }),
+      createArtifact({
+        id: "preferred",
+        checksum: { type: "sha256", value: "y" },
+        fileName: "preferred.bin",
+      }),
+    ],
+    signature: {
+      type: "ed25519" as const,
+      value: "sig",
+    },
+  };
+}
+
+function createChannelFreeManifest() {
+  return {
+    version: 1 as const,
+    entity: "secondary",
+    channel: "stable",
+    releaseVersion: "2.0.0",
+    recordedAt: "2026-06-30T12:00:00.000Z",
+    artifacts: [
+      createArtifact({
+        channel: "stable",
+        binaryPath: null,
+        checksum: { type: "sha256", value: "x" },
+      }),
+      createArtifact({
+        id: "channel-free",
+        channel: null,
+        binaryPath: "bin/app",
+        checksum: { type: "sha256", value: "y" },
+        fileName: "preferred.bin",
+      }),
+    ],
+    signature: {
+      type: "ed25519" as const,
+      value: "sig",
+    },
+  };
+}

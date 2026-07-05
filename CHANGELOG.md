@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1
+
+- adopt `@trebired/result` as the internal update-runtime outcome surface for touched lifecycle and backend communication flows instead of package-local result wrappers
+- enforce current `@trebired/code-discipline` expectations on the touched integration paths while keeping the public rollout and client APIs unchanged
+
 ## 0.2.0
 
 - Added a layered runtime surface with shared primitives, self-managed flows, and controller-managed rollout APIs.

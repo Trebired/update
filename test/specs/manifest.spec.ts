@@ -4,37 +4,14 @@ import { fetchManifest, verifyManifestSignature } from "#index";
 import { createArtifact, createSignedManifest, createSigningPair } from "#test-helpers";
 
 describe("manifest", () => {
+  registerAliasedManifestTest();
+  registerChannelLessManifestTest();
+});
+
+function registerAliasedManifestTest() {
   test("normalizes aliased payloads and verifies signatures", async () => {
-    const { privateKey, publicKey } = createSigningPair();
-    const publicPem = publicKey.export({ format: "pem", type: "spki" }).toString();
-    const privatePem = privateKey.export({ format: "pem", type: "pkcs8" }).toString();
-    const signed = createSignedManifest({
-      artifact: createArtifact({
-        checksum: {
-          type: "sha256",
-          value: "abc123",
-        },
-      }),
-      privateKeyPem: privatePem,
-    });
-    const aliasedPayload = {
-      name: signed.entity,
-      track: signed.channel,
-      release: signed.releaseVersion,
-      createdAt: signed.recordedAt,
-      minimumVersion: signed.minimumSupportedVersion,
-      releaseNotes: signed.notes,
-      files: signed.artifacts.map((artifact) => ({
-        ...artifact,
-        platform: artifact.os,
-        architecture: artifact.arch,
-        strategy: artifact.installStrategy,
-        archive: artifact.archiveFormat,
-        binary: artifact.binaryPath,
-        filename: artifact.fileName,
-      })),
-      sig: signed.signature,
-    };
+    const { publicPem, signed } = createSignedManifestFixture();
+    const aliasedPayload = createAliasedPayload(signed);
     const result = await fetchManifest({
       fetchImpl: async () => new Response(JSON.stringify(aliasedPayload), {
         headers: {
@@ -51,11 +28,11 @@ describe("manifest", () => {
     expect(result.manifest.artifacts[0].os).toBe(process.platform);
     verifyManifestSignature(result.manifest, [publicPem]);
   });
+}
 
+function registerChannelLessManifestTest() {
   test("accepts channel-less manifests", async () => {
-    const { privateKey, publicKey } = createSigningPair();
-    const publicPem = publicKey.export({ format: "pem", type: "spki" }).toString();
-    const privatePem = privateKey.export({ format: "pem", type: "pkcs8" }).toString();
+    const { privatePem, publicPem } = createSigningMaterial();
     const manifest = createSignedManifest({
       artifact: createArtifact({
         checksum: {
@@ -75,4 +52,49 @@ describe("manifest", () => {
 
     expect(result.manifest.channel).toBeNull();
   });
-});
+}
+
+function createSignedManifestFixture() {
+  const { privatePem, publicPem } = createSigningMaterial();
+  return {
+    publicPem,
+    signed: createSignedManifest({
+      artifact: createArtifact({
+        checksum: {
+          type: "sha256",
+          value: "abc123",
+        },
+      }),
+      privateKeyPem: privatePem,
+    }),
+  };
+}
+
+function createSigningMaterial() {
+  const { privateKey, publicKey } = createSigningPair();
+  return {
+    privatePem: privateKey.export({ format: "pem", type: "pkcs8" }).toString(),
+    publicPem: publicKey.export({ format: "pem", type: "spki" }).toString(),
+  };
+}
+
+function createAliasedPayload(signed: ReturnType<typeof createSignedManifest>) {
+  return {
+    createdAt: signed.recordedAt,
+    files: signed.artifacts.map((artifact) => ({
+      ...artifact,
+      architecture: artifact.arch,
+      archive: artifact.archiveFormat,
+      binary: artifact.binaryPath,
+      filename: artifact.fileName,
+      platform: artifact.os,
+      strategy: artifact.installStrategy,
+    })),
+    minimumVersion: signed.minimumSupportedVersion,
+    name: signed.entity,
+    release: signed.releaseVersion,
+    releaseNotes: signed.notes,
+    sig: signed.signature,
+    track: signed.channel,
+  };
+}

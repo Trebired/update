@@ -90,112 +90,20 @@ export async function applySelfUpdate(input: ApplySelfUpdateInput): Promise<Appl
 }
 
 export async function applySecondaryUpdate(input: ApplySecondaryUpdateInput): Promise<ApplySecondaryUpdateResult> {
-  const verified = verifySecondaryUpdateInstruction({
-    expectedTargetEntity: input.targetEntity,
-    expectedTargetInstanceId: input.targetInstanceId,
-    instruction: input.instruction,
-    now: input.now,
-    verificationKeys: input.verificationKeys,
-  });
-  const currentVersion = input.readInstalledVersion ? await input.readInstalledVersion() : "unknown";
-  const manifest = {
-    artifacts: [verified.instruction.artifact],
-    channel: null,
-    entity: verified.instruction.targetEntity,
-    minimumSupportedVersion: null,
-    notes: null,
-    recordedAt: verified.verifiedAt,
-    releaseVersion: verified.instruction.releaseVersion,
-    signature: verified.instruction.manifestSignature,
-    version: 1 as const,
-  };
-  const check = {
-    artifact: verified.instruction.artifact,
-    manifest,
-    operationId: verified.instruction.instructionId,
-    shouldUpdate: true,
-    snapshot: {
-      artifact: verified.instruction.artifact,
-      flow: "apply" as const,
-      manifest,
-      operationId: verified.instruction.instructionId,
-      phase: "update-selected" as const,
-      releaseVersion: verified.instruction.releaseVersion,
-      subject: {
-        arch: verified.instruction.artifact.arch,
-        currentVersion,
-        entity: verified.instruction.targetEntity,
-        installStrategy: verified.instruction.artifact.installStrategy,
-        os: verified.instruction.artifact.os,
-      },
-      updatedAt: verified.verifiedAt,
-      version: 1 as const,
-    },
-    sourceIndex: 0,
-    sourceUrl: verified.instruction.artifact.url,
-    subject: {
-      arch: verified.instruction.artifact.arch,
-      currentVersion,
-      entity: verified.instruction.targetEntity,
-      installStrategy: verified.instruction.artifact.installStrategy,
-      os: verified.instruction.artifact.os,
-    },
-  };
-
+  const verified = verifyInputInstruction(input);
+  const currentVersion = await resolveCurrentVersion(input);
+  const manifest = createSecondaryManifest(verified);
+  const check = createSecondaryCheck(verified, currentVersion, manifest);
+  const runtimeInput = createSecondaryRuntimeInput(input, verified, currentVersion, manifest, check.subject);
   const prepared = await prepareUpdate({
-    activationTarget: input.target,
-    arch: verified.instruction.artifact.arch,
-    auth: verified.instruction.downloadAuth ?? undefined,
+    ...runtimeInput,
     check,
-    currentVersion,
-    entity: verified.instruction.targetEntity,
-    fetchImpl: input.fetchImpl,
-    installStrategy: verified.instruction.artifact.installStrategy,
-    journalStore: input.journalStore,
-    lifecycleHandler: input.lifecycleHandler,
-    lockStore: input.lockStore,
-    manifest,
-    manifestUrl: verified.instruction.artifact.url,
-    operationId: verified.instruction.instructionId,
-    os: verified.instruction.artifact.os,
-    packageInstaller: input.packageInstaller,
-    readInstalledVersion: input.readInstalledVersion,
-    restartController: input.restartController,
-    restartHook: input.restartHook ? (context) => input.restartHook?.({
-      ...context,
-      mode: "secondary",
-    }) : undefined,
-    stateStore: input.stateStore,
-    statusHandler: input.statusHandler,
-    subject: check.subject,
-    verificationKeys: input.verificationKeys,
-    workingDirectory: input.workingDirectory,
   });
-
   const result = await applyPreparedUpdate({
-    activationTarget: input.target,
-    arch: verified.instruction.artifact.arch,
+    ...runtimeInput,
     currentVersion: prepared.check.subject.currentVersion,
-    entity: verified.instruction.targetEntity,
-    installStrategy: verified.instruction.artifact.installStrategy,
-    journalStore: input.journalStore,
-    lifecycleHandler: input.lifecycleHandler,
-    lockStore: input.lockStore,
-    manifestUrl: input.instruction.artifact.url,
-    os: verified.instruction.artifact.os,
-    packageInstaller: input.packageInstaller,
     prepared,
-    readInstalledVersion: input.readInstalledVersion,
-    restartController: input.restartController,
-    restartHook: input.restartHook ? (context) => input.restartHook?.({
-      ...context,
-      mode: "secondary",
-    }) : undefined,
-    stateStore: input.stateStore,
-    statusHandler: input.statusHandler,
     target: input.target,
-    verificationKeys: input.verificationKeys,
-    workingDirectory: input.workingDirectory,
   });
 
   return {
@@ -222,5 +130,105 @@ async function fetchManifestForClient(config: UpdateClientConfig) {
   return {
     manifest: result.manifest,
     responseHeaders: result.responseHeaders,
+  };
+}
+
+function verifyInputInstruction(input: ApplySecondaryUpdateInput) {
+  return verifySecondaryUpdateInstruction({
+    expectedTargetEntity: input.targetEntity,
+    expectedTargetInstanceId: input.targetInstanceId,
+    instruction: input.instruction,
+    now: input.now,
+    verificationKeys: input.verificationKeys,
+  });
+}
+
+async function resolveCurrentVersion(input: ApplySecondaryUpdateInput) {
+  return input.readInstalledVersion ? input.readInstalledVersion() : "unknown";
+}
+
+function createSecondaryManifest(verified: ReturnType<typeof verifyInputInstruction>) {
+  return {
+    artifacts: [verified.instruction.artifact],
+    channel: null,
+    entity: verified.instruction.targetEntity,
+    minimumSupportedVersion: null,
+    notes: null,
+    recordedAt: verified.verifiedAt,
+    releaseVersion: verified.instruction.releaseVersion,
+    signature: verified.instruction.manifestSignature,
+    version: 1 as const,
+  };
+}
+
+function createSecondaryCheck(
+  verified: ReturnType<typeof verifyInputInstruction>,
+  currentVersion: string,
+  manifest: ReturnType<typeof createSecondaryManifest>,
+) {
+  const subject = {
+    arch: verified.instruction.artifact.arch,
+    currentVersion,
+    entity: verified.instruction.targetEntity,
+    installStrategy: verified.instruction.artifact.installStrategy,
+    os: verified.instruction.artifact.os,
+  };
+
+  return {
+    artifact: verified.instruction.artifact,
+    manifest,
+    operationId: verified.instruction.instructionId,
+    shouldUpdate: true as const,
+    snapshot: {
+      artifact: verified.instruction.artifact,
+      flow: "apply" as const,
+      manifest,
+      operationId: verified.instruction.instructionId,
+      phase: "update-selected" as const,
+      releaseVersion: verified.instruction.releaseVersion,
+      subject,
+      updatedAt: verified.verifiedAt,
+      version: 1 as const,
+    },
+    sourceIndex: 0,
+    sourceUrl: verified.instruction.artifact.url,
+    subject,
+  };
+}
+
+function createSecondaryRuntimeInput(
+  input: ApplySecondaryUpdateInput,
+  verified: ReturnType<typeof verifyInputInstruction>,
+  currentVersion: string,
+  manifest: ReturnType<typeof createSecondaryManifest>,
+  subject: ReturnType<typeof createSecondaryCheck>["subject"],
+) {
+  return {
+    activationTarget: input.target,
+    arch: verified.instruction.artifact.arch,
+    auth: verified.instruction.downloadAuth ?? undefined,
+    currentVersion,
+    entity: verified.instruction.targetEntity,
+    fetchImpl: input.fetchImpl,
+    installStrategy: verified.instruction.artifact.installStrategy,
+    journalStore: input.journalStore,
+    lifecycleHandler: input.lifecycleHandler,
+    lockStore: input.lockStore,
+    manifest,
+    manifestUrl: verified.instruction.artifact.url,
+    operationId: verified.instruction.instructionId,
+    os: verified.instruction.artifact.os,
+    packageInstaller: input.packageInstaller,
+    readInstalledVersion: input.readInstalledVersion,
+    restartController: input.restartController,
+    restartHook: input.restartHook ? (context: Parameters<NonNullable<typeof input.restartHook>>[0]) => input.restartHook?.({
+      ...context,
+      mode: "secondary",
+    }) : undefined,
+    stateStore: input.stateStore,
+    statusHandler: input.statusHandler,
+    subject,
+    verificationKeys: input.verificationKeys,
+    workingDirectory: input.workingDirectory,
   };
 }

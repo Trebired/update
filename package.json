@@ -1,53 +1,32 @@
 {
-  "name": "@trebired/update",
-  "version": "0.2.0",
+  "bugs": {
+    "url": "https://github.com/Trebired/update/issues"
+  },
+  "dependencies": {
+    "@trebired/logger-adapter": "^0.2.2",
+    "@trebired/result": "^0.2.0",
+    "fflate": "^0.8.2",
+    "semver": "^7.7.3",
+    "tar-stream": "^3.1.7"
+  },
   "description": "Generic update runtime for distributed binaries and packages, with high-level flows, rollout orchestration primitives, persistence helpers, and safe activation.",
-  "license": "MIT",
-  "type": "module",
-  "private": false,
-  "packageManager": "bun@1.3.12",
+  "devDependencies": {
+    "@trebired/code-discipline": "^3.1.1",
+    "@types/bun": "^1.3.4",
+    "@types/node": "^24.10.1",
+    "@types/semver": "^7.7.1",
+    "@types/tar-stream": "^3.1.4",
+    "typescript": "^6.0.2"
+  },
   "engines": {
     "bun": ">=1.0.0",
     "node": ">=18"
   },
-  "publishConfig": {
-    "access": "public"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Trebired/update"
-  },
-  "homepage": "https://github.com/Trebired/update#readme",
-  "bugs": {
-    "url": "https://github.com/Trebired/update/issues"
-  },
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     }
-  },
-  "imports": {
-    "#activate": "./src/activate.ts",
-    "#artifacts": "./src/artifacts.ts",
-    "#canonical": "./src/canonical.ts",
-    "#client": "./src/client.ts",
-    "#download": "./src/download.ts",
-    "#fs": "./src/fs.ts",
-    "#index": "./src/index.ts",
-    "#manifest": "./src/manifest.ts",
-    "#orchestrator": "./src/orchestrator.ts",
-    "#package-install": "./src/package-install.ts",
-    "#paths": "./src/paths.ts",
-    "#runtime": "./src/runtime.ts",
-    "#scheduler": "./src/scheduler.ts",
-    "#stage": "./src/stage.ts",
-    "#stores": "./src/stores.ts",
-    "#types": "./src/types.ts",
-    "#verify": "./src/verify.ts",
-    "#test-helpers": "./test/specs/helpers.ts"
   },
   "files": [
     "dist",
@@ -55,6 +34,54 @@
     "LICENSE",
     "README.md"
   ],
+  "homepage": "https://github.com/Trebired/update#readme",
+  "imports": {
+    "#0kcbqano73my": "./test/specs/stage_activate.spec.ts",
+    "#1z1fd8ththut": "./src/runtime/snapshots.ts",
+    "#3qds0eu17fy6": "./src/logging.ts",
+    "#6f1tfx6vspef": "./src/runtime/lifecycle.ts",
+    "#6i4x6keei3cl": "./src/runtime/restart.ts",
+    "#6na3wpwptvxz": "./src/types/rollout.ts",
+    "#6u3d2dmt8saj": "./src/types/runtime-compat.ts",
+    "#7vh4t9otx13s": "./test/specs/runtime/rollout.spec.ts",
+    "#7wkq5qrjwpds": "./src/runtime/apply.ts",
+    "#7z5kvvqjs1gu": "./src/runtime/resume.ts",
+    "#8kccwofitc9e": "./src/runtime/prepare.ts",
+    "#activate": "./src/activate.ts",
+    "#artifacts": "./src/artifacts.ts",
+    "#aukclxcpjqw2": "./src/types/client.ts",
+    "#b7r0nq0gtk1r": "./test/specs/manifest.spec.ts",
+    "#canonical": "./src/canonical.ts",
+    "#client": "./src/client.ts",
+    "#cmpbzl1tvjsr": "./test/specs/orchestration_client.spec.ts",
+    "#dexr8csb9m2z": "./src/types/core.ts",
+    "#download": "./src/download.ts",
+    "#e8cadnzkahuy": "./test/specs/verify_artifacts.spec.ts",
+    "#fs": "./src/fs.ts",
+    "#g84stebzt7t5": "./src/runtime/check.ts",
+    "#hsish559y0m0": "./src/runtime/shared.ts",
+    "#in2axtcvd3cj": "./.tmp/verify-pack/consumer/index.ts",
+    "#index": "./src/index.ts",
+    "#kn5mninc2td8": "./src/types/index.ts",
+    "#lvoscxcxul2m": "./test/specs/runtime/flows.spec.ts",
+    "#manifest": "./src/manifest.ts",
+    "#orchestrator": "./src/orchestrator.ts",
+    "#p4wgssd2rzx2": "./src/types/runtime.ts",
+    "#package-install": "./src/package-install.ts",
+    "#paths": "./src/paths.ts",
+    "#qkftxdsz0h6q": "./src/types/logging.ts",
+    "#rim89s5hvbyb": "./tb.code-discipline.ts",
+    "#runtime": "./src/runtime.ts",
+    "#scheduler": "./src/scheduler.ts",
+    "#stage": "./src/stage.ts",
+    "#stores": "./src/stores.ts",
+    "#test-helpers": "./test/specs/helpers.ts",
+    "#types": "./src/types.ts",
+    "#u5znmf1spkff": "./src/runtime/index.ts",
+    "#verify": "./src/verify.ts",
+    "#vvj5nfa3dikz": "./src/types/lifecycle.ts",
+    "#xzpw97eulvh2": "./test/specs/runtime_flows.spec.ts"
+  },
   "keywords": [
     "update",
     "updater",
@@ -71,20 +98,17 @@
     "node",
     "bun"
   ],
-  "dependencies": {
-    "@trebired/logger-adapter": "^0.2.2",
-    "@trebired/result": "^0.2.0",
-    "fflate": "^0.8.2",
-    "semver": "^7.7.3",
-    "tar-stream": "^3.1.7"
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "name": "@trebired/update",
+  "packageManager": "bun@1.3.12",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
   },
-  "devDependencies": {
-    "@trebired/code-discipline": "^3.1.1",
-    "@types/bun": "^1.3.4",
-    "@types/node": "^24.10.1",
-    "@types/semver": "^7.7.1",
-    "@types/tar-stream": "^3.1.4",
-    "typescript": "^6.0.2"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Trebired/update"
   },
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json && node ./scripts/prepare-dist.mjs prepare-dist",
@@ -94,5 +118,8 @@
     "test": "bun test",
     "typecheck": "tsc --noEmit",
     "verify:pack": "node ./scripts/verify-pack.mjs"
-  }
+  },
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "version": "0.2.1"
 }

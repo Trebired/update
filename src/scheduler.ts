@@ -19,8 +19,11 @@ export function createUpdateScheduler(input: UpdateSchedulerConfig): UpdateSched
 
   const scheduleNext = () => queueNextRun(input.intervalMs, state, () => {
     timer = setTimeout(() => {
-      void runOnce().finally(scheduleNext);
+      void runInLoop(input, state, runOnce).finally(scheduleNext);
     }, input.intervalMs);
+    if (input.unrefTimer !== false && typeof timer.unref === "function") {
+      timer.unref();
+    }
   });
   const runOnce = () => executeScheduledRun(input, state, {
     get activeRun() {
@@ -37,7 +40,7 @@ export function createUpdateScheduler(input: UpdateSchedulerConfig): UpdateSched
     },
   });
 
-  return createSchedulerApi(state, runOnce, scheduleNext, () => timer, (value) => {
+  return createSchedulerApi(input, state, runOnce, scheduleNext, () => timer, (value) => {
     timer = value;
   }, () => running);
 }
@@ -63,6 +66,7 @@ function queueNextRun(intervalMs: number, state: UpdateSchedulerState, schedule:
 }
 
 function createSchedulerApi(
+  input: UpdateSchedulerConfig,
   state: UpdateSchedulerState,
   runOnce: () => Promise<AppliedUpdateResult | UpdateCheckResult>,
   scheduleNext: () => void,
@@ -83,7 +87,7 @@ function createSchedulerApi(
       }
 
       state.running = true;
-      void runOnce().finally(scheduleNext);
+      void runInLoop(input, state, runOnce).finally(scheduleNext);
     },
     stop() {
       state.running = false;
@@ -99,6 +103,25 @@ function createSchedulerApi(
       return runOnce();
     },
   };
+}
+
+async function runInLoop(
+  input: UpdateSchedulerConfig,
+  state: UpdateSchedulerState,
+  runOnce: () => Promise<AppliedUpdateResult | UpdateCheckResult>,
+): Promise<void> {
+  try {
+    await runOnce();
+  }
+  catch (error) {
+    const normalized = error instanceof Error ? error : new Error(String(error));
+    state.lastError = normalized;
+    await input.onError?.(normalized, {
+      state: {
+        ...state,
+      },
+    });
+  }
 }
 
 async function executeScheduledRun(

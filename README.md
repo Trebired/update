@@ -31,7 +31,7 @@ Use `checkForUpdate`, `prepareUpdate`, `applyPreparedUpdate`, `applyUpdate`, `re
 ```ts
 import { applyUpdate, createFileUpdateJournalStore, createFileUpdateStateStore } from "@trebired/update";
 
-const workingDirectory = "/var/lib/my-service/update";
+const workingDirectory = "/var/lib/entity/update";
 
 const result = await applyUpdate({
   entity: "primary",
@@ -39,11 +39,11 @@ const result = await applyUpdate({
   os: process.platform,
   arch: process.arch,
   installStrategy: "raw",
-  manifestUrl: "https://updates.example.test/primary/manifest.json",
+  manifestUrl: "manifest:primary",
   workingDirectory,
   verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
   activationTarget: {
-    livePath: "/opt/my-service/bin/service",
+    livePath: "/opt/entity/bin/current",
   },
   stateStore: createFileUpdateStateStore({
     directory: workingDirectory,
@@ -72,15 +72,20 @@ const scheduler = createUpdateScheduler({
   os: process.platform,
   arch: process.arch,
   installStrategy: "raw",
-  manifestUrl: "https://updates.example.test/primary/manifest.json",
-  workingDirectory: "/var/lib/my-service/update",
+  manifestUrl: "manifest:primary",
+  workingDirectory: "/var/lib/entity/update",
   verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
   intervalMs: 60_000,
   mode: "check",
+  onError: (error) => {
+    console.error(error.message);
+  },
 });
 
 scheduler.start();
 ```
+
+`start()` runs one check immediately, then polls on the configured interval. Scheduled runs are single-flight, interval timers are unref'd by default, and background errors are swallowed after `onError` is called. `triggerNow()` still returns the run promise for callers that want to handle success or failure directly.
 
 ## Controller-Managed Rollout
 
@@ -94,11 +99,11 @@ import {
 } from "@trebired/update";
 
 const plan = await planRollout({
-  manifestUrl: "https://updates.example.test/secondary/manifest.json",
+  manifestUrl: "manifest:secondary",
   verificationKeys: [process.env.UPDATE_PUBLIC_KEY_PEM!],
   targets: [
     {
-      targetId: "worker-1",
+      targetId: "target-1",
       subject: {
         entity: "secondary",
         currentVersion: "1.0.0",
@@ -147,6 +152,7 @@ import {
 Key capabilities:
 
 - fallback manifest sources
+- generic JSON manifest fetch with shared fetch/auth/signature handling
 - optional channel-aware legacy selection plus channel-free core selection
 - resumable downloads and artifact mirrors
 - file-backed state, journal, and locking helpers
@@ -154,6 +160,116 @@ Key capabilities:
 - restart/deferred-activation hooks
 - update instruction creation and verification
 - batch rollout planning and summary types
+
+## Compatibility, Counterparts, Fleet State, and Resources
+
+Compatibility sets describe exact certified combinations. They are explicit released combinations, not semver ranges:
+
+```ts
+import {
+  compatibilityKey,
+  findCombination,
+  isCombinationReleased,
+  normalizeCompatibilitySet,
+} from "@trebired/update";
+
+const set = normalizeCompatibilitySet({
+  combinations: [{
+    versions: {
+      "entity-a": "1.0.0",
+      "entity-b": "2.0.0",
+    },
+    resources: {
+      schema: {
+        version: "4.0.0",
+        fileName: "schema.zip",
+        checksum: { type: "sha256", value: "..." },
+      },
+    },
+  }],
+});
+
+const combination = findCombination(set, { "entity-a": "1.0.0" });
+const key = combination ? compatibilityKey(combination) : null;
+const released = isCombinationReleased(set, { "entity-a": "1.0.0", "entity-b": "2.0.0" });
+```
+
+Installed builds can embed counterpart expectations and enforce them offline:
+
+```ts
+import {
+  assertCounterpart,
+  readCounterpartExpectations,
+} from "@trebired/update";
+
+const expected = readCounterpartExpectations(config, {
+  fieldPaths: {
+    "entity-b": "release.entityBVersion",
+  },
+});
+
+assertCounterpart({
+  selfEntity: "entity-a",
+  selfVersion: "1.0.0",
+  expected,
+  reported: {
+    "entity-b": reportedEntityBVersion,
+  },
+});
+```
+
+Fleet classification is exact and order-independent:
+
+```ts
+import { classifyFleet, classifySubject } from "@trebired/update";
+
+const status = classifySubject({
+  reported: "1.0.0",
+  expected: "1.0.0",
+  target: "1.1.0",
+});
+
+const fleet = classifyFleet(subjects, {
+  expected: { "entity-b": "2.0.0" },
+  target: { "entity-b": "2.1.0" },
+});
+
+console.log(status.status, fleet.signature);
+```
+
+Resource manifests and bundles distribute versioned non-executable payloads attached to a combination. Bundle installation downloads, verifies SHA-256, extracts with traversal protection, optionally validates staging contents, replaces the target directory, and writes installed metadata:
+
+```ts
+import {
+  fetchResourceManifest,
+  installResourceBundle,
+  readInstalledResourceMeta,
+  selectResourceEntry,
+} from "@trebired/update";
+
+const manifest = await fetchResourceManifest("manifest:resources", {
+  verificationKeys: [publicKey],
+});
+
+const entry = selectResourceEntry(manifest.manifest, {
+  combination: { "entity-a": "1.0.0", "entity-b": "2.0.0" },
+  resource: "schema",
+});
+
+await installResourceBundle({
+  url: entry.url,
+  checksum: entry.checksum,
+  key: entry.key,
+  version: entry.version,
+  workingDirectory,
+  targetDirectory,
+  validate: async (stagingDir) => {
+    await ensureExpectedFiles(stagingDir);
+  },
+});
+
+const meta = await readInstalledResourceMeta(targetDirectory);
+```
 
 ## Compatibility Helpers
 
@@ -177,6 +293,8 @@ These helpers now wrap the newer primitives and flows. Legacy channel-aware beha
 - invalid instruction signatures are rejected
 - invalid SHA-256 checksums are rejected
 - archive traversal is rejected
+- resource bundle checksum mismatches are rejected
+- resource bundle installs replace prior target contents and refresh installed metadata
 - expired instructions are rejected
 - minimum supported version rules are enforced consistently during planning and applying
 - duplicate concurrent check and apply executions can be locked out
@@ -214,6 +332,17 @@ Instruction and evaluation primitives:
 - `createUpdateInstruction`
 - `verifyUpdateInstruction`
 - `evaluateUpdateCandidate`
+- `fetchJsonManifest`
+- `normalizeCompatibilitySet`
+- `compatibilityKey`
+- `parseCompatibilityKey`
+- `findCombination`
+- `isCombinationReleased`
+- `readCounterpartExpectations`
+- `evaluateCounterpart`
+- `assertCounterpart`
+- `classifySubject`
+- `classifyFleet`
 - `fetchManifestFromSources`
 - `selectArtifactForSubject`
 
@@ -221,6 +350,11 @@ Download, install, and activation primitives:
 
 - `downloadArtifact`
 - `verifyDownloadedArtifact`
+- `fetchResourceManifest`
+- `normalizeResourceManifest`
+- `selectResourceEntry`
+- `installResourceBundle`
+- `readInstalledResourceMeta`
 - `stageArtifact`
 - `executePackageInstall`
 - `activateStagedArtifact`

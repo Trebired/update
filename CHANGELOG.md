@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.0
+
+- add exact compatibility sets with deterministic keys, partial lookup, membership checks, alias-aware normalization, and optional signature verification
+- add offline counterpart expectation reading, evaluation, and structured mismatch errors for caller-owned boot gates
+- add subject and fleet classification helpers with order-independent fleet signatures
+- add signed resource manifests and checksum-verified non-executable resource bundle installation with traversal guards, replace semantics, and installed metadata
+- add generic JSON manifest fetching with shared fetch/auth/signature handling
+- extend the scheduler start loop with immediate single-flight polling, unref'd timers, and handled background errors
+
 ## 0.2.1
 
 - adopt `@trebired/result` as the internal update-runtime outcome surface for touched lifecycle and backend communication flows instead of package-local result wrappers

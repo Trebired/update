@@ -1,5 +1,13 @@
 import { normalizeArtifact } from "#artifacts";
 import { resolveAuthHeaders } from "#download";
+import {
+  normalizeSignature,
+  readArray,
+  readOptionalRecord,
+  readOptionalString,
+  readRecord,
+  readString,
+} from "#normalization";
 import { verifyManifestSignature } from "#verify";
 import type {
   FetchManifestFromSourcesInput,
@@ -126,73 +134,4 @@ function normalizeNotes(value: Record<string, unknown> | null) {
     summary: typeof value.summary === "string" ? value.summary : undefined,
     url: typeof value.url === "string" ? value.url : undefined,
   };
-}
-
-function normalizeSignature(value: Record<string, unknown>) {
-  return {
-    type: String(value.type ?? "ed25519") as "ed25519",
-    value: String(value.value),
-  };
-}
-
-function readArray(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean): Record<string, unknown>[] {
-  const value = readUnknown(input, keys, allowAliases);
-  if (!Array.isArray(value)) {
-    throw new Error(`Expected array field ${keys[0]}.`);
-  }
-  return value as Record<string, unknown>[];
-}
-
-function readRecord(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean): Record<string, unknown> {
-  const value = readUnknown(input, keys, allowAliases);
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error(`Expected object field ${keys[0]}.`);
-  }
-  return value as Record<string, unknown>;
-}
-
-function readOptionalRecord(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean): Record<string, unknown> | null {
-  const value = readUnknown(input, keys, allowAliases, true);
-  if (value == null) {
-    return null;
-  }
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    throw new Error(`Expected object field ${keys[0]}.`);
-  }
-  return value as Record<string, unknown>;
-}
-
-function readString(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean): string {
-  const value = readUnknown(input, keys, allowAliases);
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Expected string field ${keys[0]}.`);
-  }
-  return value;
-}
-
-function readOptionalString(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean): string | null {
-  const value = readUnknown(input, keys, allowAliases, true);
-  if (value == null) {
-    return null;
-  }
-  if (typeof value !== "string" || value.length === 0) {
-    throw new Error(`Expected optional string field ${keys[0]}.`);
-  }
-  return value;
-}
-
-function readUnknown(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean, optional = false): unknown {
-  const names = allowAliases ? keys : [keys[0]];
-
-  for (const key of names) {
-    if (key in input) {
-      return input[key];
-    }
-  }
-
-  if (optional) {
-    return null;
-  }
-
-  throw new Error(`Missing required field ${keys[0]}.`);
 }

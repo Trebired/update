@@ -45,8 +45,14 @@
       "#8kccwofitc9e": [
         "./src/runtime/prepare.ts"
       ],
+      "#9i27mb8wn2qm": [
+        "./test/specs/classification.spec.ts"
+      ],
       "#activate": [
         "./src/activate.ts"
+      ],
+      "#archive": [
+        "./src/archive.ts"
       ],
       "#artifacts": [
         "./src/artifacts.ts"
@@ -60,11 +66,20 @@
       "#canonical": [
         "./src/canonical.ts"
       ],
+      "#classification": [
+        "./src/classification.ts"
+      ],
       "#client": [
         "./src/client.ts"
       ],
       "#cmpbzl1tvjsr": [
         "./test/specs/orchestration_client.spec.ts"
+      ],
+      "#compatibility": [
+        "./src/compatibility.ts"
+      ],
+      "#counterpart": [
+        "./src/counterpart.ts"
       ],
       "#dexr8csb9m2z": [
         "./src/types/core.ts"
@@ -75,11 +90,17 @@
       "#e8cadnzkahuy": [
         "./test/specs/verify_artifacts.spec.ts"
       ],
+      "#fetch-json": [
+        "./src/fetch-json.ts"
+      ],
       "#fs": [
         "./src/fs.ts"
       ],
       "#g84stebzt7t5": [
         "./src/runtime/check.ts"
+      ],
+      "#heb1hs7d1xln": [
+        "./test/specs/compatibility_counterpart.spec.ts"
       ],
       "#hsish559y0m0": [
         "./src/runtime/shared.ts"
@@ -99,6 +120,12 @@
       "#manifest": [
         "./src/manifest.ts"
       ],
+      "#normalization": [
+        "./src/normalization.ts"
+      ],
+      "#o2bxrdgamjud": [
+        "./src/types/compatibility.ts"
+      ],
       "#orchestrator": [
         "./src/orchestrator.ts"
       ],
@@ -113,6 +140,9 @@
       ],
       "#qkftxdsz0h6q": [
         "./src/types/logging.ts"
+      ],
+      "#resources": [
+        "./src/resources.ts"
       ],
       "#rim89s5hvbyb": [
         "./tb.code-discipline.ts"
@@ -143,6 +173,9 @@
       ],
       "#vvj5nfa3dikz": [
         "./src/types/lifecycle.ts"
+      ],
+      "#xjf69655fc6r": [
+        "./test/specs/resources.spec.ts"
       ]
     },
     "resolveJsonModule": true,

@@ -23,6 +23,7 @@ import type {
   UpdateStateStore,
 } from "./lifecycle.js";
 import type { UpdateLogger, UpdateLoggerAdapter, UpdateStatusHandler } from "./logging.js";
+import type { UpdateSchedulerLoopOptions } from "./compatibility.js";
 
 export type UpdateClientConfig = UpdateRuntimeTarget & {
   manifestUrl: string;
@@ -250,7 +251,7 @@ export type UpdateSchedulerConfig = UpdateClientConfig & {
   lockKey?: string;
   mode?: UpdateSchedulerMode;
   operationIdFactory?: () => string;
-};
+} & UpdateSchedulerLoopOptions;
 
 export type UpdateScheduler = {
   getState(): UpdateSchedulerState;

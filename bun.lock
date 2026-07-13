@@ -7,22 +7,22 @@
       "dependencies": {
         "@trebired/logger-adapter": "^0.2.2",
         "@trebired/result": "^0.2.0",
-        "fflate": "^0.8.2",
-        "semver": "^7.7.3",
-        "tar-stream": "^3.1.7",
+        "fflate": "^0.8.3",
+        "semver": "^7.8.5",
+        "tar-stream": "^3.2.0",
       },
       "devDependencies": {
-        "@trebired/code-discipline": "^3.1.1",
-        "@types/bun": "^1.3.4",
-        "@types/node": "^24.10.1",
+        "@trebired/code-discipline": "^3.2.1",
+        "@types/bun": "^1.3.14",
+        "@types/node": "^24.13.3",
         "@types/semver": "^7.7.1",
         "@types/tar-stream": "^3.1.4",
-        "typescript": "^6.0.2",
+        "typescript": "^6.0.3",
       },
     },
   },
   "packages": {
-    "@trebired/code-discipline": ["@trebired/code-discipline@3.1.1", "", { "dependencies": { "@trebired/logger-adapter": "^0.2.0", "typescript": "^6.0.2" }, "bin": { "code-discipline": "dist/cli.js" } }, "sha512-Ruri/ozryVDnV8bbSLtsQqsvcDmuW2zFWx1t+/oKmToyTnMQZkQN0xkXvnx3bkYmHWCAD+RkaiUY6GowcLPZuw=="],
+    "@trebired/code-discipline": ["@trebired/code-discipline@3.2.1", "", { "dependencies": { "@trebired/logger-adapter": "^0.2.2", "@trebired/result": "^0.2.0", "typescript": "^6.0.2" }, "bin": { "code-discipline": "dist/cli.js" } }, "sha512-RnkmR3R0uOQ1dUpAiobyamhcWTh1f87gyvzuXnvZFxgFyOxcir1SBSnLwnet48arICsQ2yIbsr45InhKuyacNQ=="],
 
     "@trebired/logger-adapter": ["@trebired/logger-adapter@0.2.2", "", {}, "sha512-8FurbitdICfB8Y5LmY1ucZesw5H0V1SVS1Um3ZqQHyyU2+5SHNlS6jhPSE34y53mAvYExCgriCj1r/5lG3UoWQ=="],
 
@@ -30,7 +30,7 @@
 
     "@types/bun": ["@types/bun@1.3.14", "", { "dependencies": { "bun-types": "1.3.14" } }, "sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw=="],
 
-    "@types/node": ["@types/node@24.13.2", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA=="],
+    "@types/node": ["@types/node@24.13.3", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-Dh8vAsV36ig5wa9OX4pXvMc9D3Veibfw2wix0CUwYODLD8nkj9UsLjASr49nPg+2eKzxhBV+v7L8pXvT4e639Q=="],
 
     "@types/semver": ["@types/semver@7.7.1", "", {}, "sha512-FmgJfu+MOcQ370SD0ev7EI8TlCAfKYU+B4m5T3yXc1CiRN94g/SZPtsCkk506aUDtlMnFZvasDwHHUcZUEaYuA=="],
 
@@ -71,5 +71,9 @@
     "typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
+
+    "@types/tar-stream/@types/node": ["@types/node@24.13.2", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA=="],
+
+    "bun-types/@types/node": ["@types/node@24.13.2", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-fRa09kZTgu8o71KFcDjUFuc7F+dEbZYZmkI0mg5YBTRs0yMKjYHsq/c0urDKeDb+D5qVgXOdFcuu+DZPKOITwA=="],
   }
 }

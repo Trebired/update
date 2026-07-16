@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1
+
+- Moved package-owned update lifecycle status logging under the `trebired.update` group root.
+
 ## 1.0.0
 
 - add exact compatibility sets with deterministic keys, partial lookup, membership checks, alias-aware normalization, and optional signature verification

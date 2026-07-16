@@ -71,16 +71,16 @@ function logStatusEvent(input: LifecycleInput, statusEvent: UpdateStatusEvent) {
     };
 
   if (statusEvent.level === "error") {
-    logger.fail("update", statusEvent.message, metadata);
+    logger.fail("trebired.update", statusEvent.message, metadata);
     return;
   }
 
   if (statusEvent.level === "warn") {
-    logger.warn("update", statusEvent.message, metadata);
+    logger.warn("trebired.update", statusEvent.message, metadata);
     return;
   }
 
-  logger.info("update", statusEvent.message, metadata);
+  logger.info("trebired.update", statusEvent.message, metadata);
 }
 
 function toCheckStartedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "check.started" }>): UpdateStatusEvent {

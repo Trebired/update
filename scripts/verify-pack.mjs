@@ -165,30 +165,43 @@ async function runConsumerSmokeTest(tarballPath) {
     recursive: true,
   });
 
+  await writeConsumerPackageJson(consumerDir, tarballPath);
+  await writeConsumerSourceFiles(consumerDir);
+  await writeConsumerTsconfig(consumerDir);
+  runConsumerInstall(consumerDir);
+  runConsumerTypecheck(consumerDir);
+  runConsumerRuntime(consumerDir);
+}
+
+async function writeConsumerPackageJson(consumerDir, tarballPath) {
   await fs.writeFile(path.join(consumerDir, "package.json"), JSON.stringify({
     name: "update-pack-smoke",
     private: true,
     type: "module",
     dependencies: {
-      "@trebired/update": `file:${tarballPath}`,
+      "@package/update": `file:${tarballPath}`,
     },
     devDependencies: {
       "@types/node": `file:${nodeTypesDir}`,
     },
   }, null, 2));
+}
 
+async function writeConsumerSourceFiles(consumerDir) {
   await fs.writeFile(path.join(consumerDir, "index.ts"), [
-    'import { createUpdateClient, verifySecondaryUpdateInstruction } from "@trebired/update";',
+    'import { createUpdateClient, verifySecondaryUpdateInstruction } from "@package/update";',
     "",
     "console.log(typeof createUpdateClient, typeof verifySecondaryUpdateInstruction);",
   ].join("\n"));
 
   await fs.writeFile(path.join(consumerDir, "runtime.mjs"), [
-    'import { fetchManifest, planSelfUpdate } from "@trebired/update";',
+    'import { fetchManifest, planSelfUpdate } from "@package/update";',
     "",
     "console.log(typeof fetchManifest, typeof planSelfUpdate);",
   ].join("\n"));
+}
 
+async function writeConsumerTsconfig(consumerDir) {
   await fs.writeFile(path.join(consumerDir, "tsconfig.json"), JSON.stringify({
     compilerOptions: {
       lib: [
@@ -207,17 +220,23 @@ async function runConsumerSmokeTest(tarballPath) {
       "./index.ts",
     ],
   }, null, 2));
+}
 
+function runConsumerInstall(consumerDir) {
   execFileSync("npm", ["install", "--ignore-scripts"], {
     ...createNpmOptions(consumerDir),
     stdio: "inherit",
   });
+}
 
+function runConsumerTypecheck(consumerDir) {
   execFileSync(process.execPath, [tscBin, "-p", "tsconfig.json"], {
     cwd: consumerDir,
     stdio: "inherit",
   });
+}
 
+function runConsumerRuntime(consumerDir) {
   execFileSync("node", ["runtime.mjs"], {
     cwd: consumerDir,
     stdio: "inherit",

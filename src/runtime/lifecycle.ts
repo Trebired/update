@@ -1,4 +1,4 @@
-import { result } from "@trebired/result";
+import { result } from "@package/result";
 
 import { resolveLogger } from "#3qds0eu17fy6";
 import type {
@@ -71,16 +71,16 @@ function logStatusEvent(input: LifecycleInput, statusEvent: UpdateStatusEvent) {
     };
 
   if (statusEvent.level === "error") {
-    logger.fail("trebired.update", statusEvent.message, metadata);
+    logger.fail("package.update", statusEvent.message, metadata);
     return;
   }
 
   if (statusEvent.level === "warn") {
-    logger.warn("trebired.update", statusEvent.message, metadata);
+    logger.warn("package.update", statusEvent.message, metadata);
     return;
   }
 
-  logger.info("trebired.update", statusEvent.message, metadata);
+  logger.info("package.update", statusEvent.message, metadata);
 }
 
 function toCheckStartedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "check.started" }>): UpdateStatusEvent {
@@ -133,11 +133,12 @@ function toNoUpdateStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "no.
     context: { operationId: event.operationId, reason: event.reason },
     level: "info",
     message: "No update available.",
-    result: result.noop("no-update", "No update is available.", {
+    result: result.noop("no-update", {
       data: {
         operationId: event.operationId,
       },
       details: {
+        message: "No update is available.",
         reason: event.reason,
       },
     }),
@@ -171,12 +172,13 @@ function toFailureStatusEvent(
     context: { error: event.error?.message, operationId: event.operationId },
     level: "error",
     message: event.type,
-    result: result.internal(event.type, event.type, {
+    result: result.internal(event.type, {
       data: {
         operationId: event.operationId,
       },
       details: {
         error: event.error?.message,
+        message: event.type,
       },
     }),
   };

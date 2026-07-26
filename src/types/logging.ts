@@ -1,4 +1,4 @@
-import type { ResultLike } from "@trebired/result";
+import type { ResultLike } from "@package/result";
 import type {
   LoggerAdapterEvent,
   LoggerAdapterGenericLogMethod,
@@ -6,7 +6,7 @@ import type {
   LoggerAdapterLogMethod,
   LoggerAdapterWriter,
   NormalizedLoggerAdapter,
-} from "@trebired/logger-adapter";
+} from "@package/logger-adapter";
 
 export type UpdateStatusLevel = "debug" | "info" | "warn" | "error";
 export type UpdateLogMethod = LoggerAdapterLogMethod;

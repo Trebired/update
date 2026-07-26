@@ -64,6 +64,9 @@
       "#download": [
         "../../src/download.ts"
       ],
+      "#excrnrt4o22m": [
+        "../../src/package/install.ts"
+      ],
       "#fetch-json": [
         "../../src/fetch-json.ts"
       ],
@@ -94,14 +97,14 @@
       "#o2bxrdgamjud": [
         "../../src/types/compatibility.ts"
       ],
+      "#ohc5bi40j86u": [
+        "../../src/package/metadata.ts"
+      ],
       "#orchestrator": [
         "../../src/orchestrator.ts"
       ],
       "#p4wgssd2rzx2": [
         "../../src/types/runtime.ts"
-      ],
-      "#package-install": [
-        "../../src/package-install.ts"
       ],
       "#paths": [
         "../../src/paths.ts"

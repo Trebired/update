@@ -31,7 +31,7 @@ export {
   verifySecondaryUpdateInstruction,
   verifyUpdateInstruction,
 } from "#orchestrator";
-export { createHostPackageInstaller, executePackageInstall } from "#package-install";
+export { createHostPackageInstaller, executePackageInstall } from "#excrnrt4o22m";
 export { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate, resumeUpdate } from "#runtime";
 export { createUpdateScheduler } from "#scheduler";
 export {

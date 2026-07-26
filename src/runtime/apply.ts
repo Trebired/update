@@ -1,5 +1,5 @@
 import { activateStagedArtifact } from "#activate";
-import { executePackageInstall } from "#package-install";
+import { executePackageInstall } from "#excrnrt4o22m";
 import { withUpdateLock } from "#stores";
 import type {
   AppliedUpdateResult,

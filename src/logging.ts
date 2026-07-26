@@ -2,6 +2,7 @@ import {
   resolveLogger as resolveSharedLogger,
 } from "@package/logger-adapter";
 
+import { PACKAGE_NAME } from "#ohc5bi40j86u";
 import type {
   NormalizedUpdateLogger,
   UpdateLogger,
@@ -16,7 +17,7 @@ function resolveLogger(
     adapter,
     fallback: "console",
     logger,
-    source: "@package/update",
+    source: PACKAGE_NAME,
   }) as NormalizedUpdateLogger;
 }
 

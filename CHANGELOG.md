@@ -1,6 +1,10 @@
 # Changelog
 
+## 1.0.4
+
 - Standardized package metadata ordering and contributing guidance around the Trebired writing style.
+- Added package-owned organization metadata and derived update lifecycle log groups from `package.json`.
+- Updated internal package dependency ranges to the current sibling package releases.
 
 ## 1.0.3
 

@@ -1,11 +1,14 @@
 import { result } from "@package/result";
 
 import { resolveLogger } from "#3qds0eu17fy6";
+import { buildPackageLogGroup } from "#ohc5bi40j86u";
 import type {
   UpdateClientConfig,
   UpdateLifecycleEvent,
   UpdateStatusEvent,
 } from "#types";
+
+const UPDATE_LOG_GROUP = buildPackageLogGroup();
 
 type LifecycleInput = Pick<
   UpdateClientConfig,
@@ -71,16 +74,16 @@ function logStatusEvent(input: LifecycleInput, statusEvent: UpdateStatusEvent) {
     };
 
   if (statusEvent.level === "error") {
-    logger.fail("package.update", statusEvent.message, metadata);
+    logger.fail(UPDATE_LOG_GROUP, statusEvent.message, metadata);
     return;
   }
 
   if (statusEvent.level === "warn") {
-    logger.warn("package.update", statusEvent.message, metadata);
+    logger.warn(UPDATE_LOG_GROUP, statusEvent.message, metadata);
     return;
   }
 
-  logger.info("package.update", statusEvent.message, metadata);
+  logger.info(UPDATE_LOG_GROUP, statusEvent.message, metadata);
 }
 
 function toCheckStartedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "check.started" }>): UpdateStatusEvent {
@@ -89,7 +92,7 @@ function toCheckStartedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: 
     context: { operationId: event.operationId },
     level: "info",
     message: "Update check started.",
-    result: result.ok("Update check started.", {
+    result: result.ok("update-check-started", {
       data: {
         operationId: event.operationId,
       },
@@ -103,7 +106,7 @@ function toManifestFetchedStatusEvent(event: Extract<UpdateLifecycleEvent, { typ
     context: { operationId: event.operationId, sourceUrl: event.sourceUrl },
     level: "info",
     message: "Manifest fetched.",
-    result: result.ok("Update manifest fetched.", {
+    result: result.ok("update-manifest-fetched", {
       data: {
         operationId: event.operationId,
         sourceUrl: event.sourceUrl,
@@ -118,7 +121,7 @@ function toUpdateAvailableStatusEvent(event: Extract<UpdateLifecycleEvent, { typ
     context: { artifactId: event.artifact.id, operationId: event.operationId },
     level: "info",
     message: "Update available.",
-    result: result.ok("Update available.", {
+    result: result.ok("update-available", {
       data: {
         artifactId: event.artifact.id,
         operationId: event.operationId,
@@ -151,7 +154,7 @@ function toApplyStartedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: 
     context: { artifactId: event.artifact.id, operationId: event.operationId },
     level: "info",
     message: "Apply started.",
-    result: result.ok("Update apply started.", {
+    result: result.ok("update-apply-started", {
       data: {
         artifactId: event.artifact.id,
         operationId: event.operationId,

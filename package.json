@@ -1,27 +1,17 @@
 {
-  "bugs": {
-    "url": "https://github.com/Trebired/update/issues"
-  },
-  "dependencies": {
-    "@package/logger-adapter": "npm:@trebired/logger-adapter@^0.2.3",
-    "@package/result": "npm:@trebired/result@^1.0.1",
-    "fflate": "^0.8.3",
-    "semver": "^7.8.5",
-    "tar-stream": "^3.2.0"
-  },
+  "name": "@trebired/update",
+  "version": "1.0.3",
   "description": "Generic update runtime for distributed binaries and packages, with high-level flows, rollout orchestration primitives, persistence helpers, and safe activation.",
-  "devDependencies": {
-    "@trebired/code-discipline": "^4.7.1",
-    "@types/bun": "^1.3.14",
-    "@types/node": "^24.13.3",
-    "@types/semver": "^7.7.1",
-    "@types/tar-stream": "^3.1.4",
-    "typescript": "^6.0.3"
-  },
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "packageManager": "bun@1.3.12",
   "engines": {
     "bun": ">=1.0.0",
     "node": ">=18"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/index.js",
@@ -34,7 +24,29 @@
     "LICENSE",
     "README.md"
   ],
-  "homepage": "https://github.com/Trebired/update#readme",
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ./scripts/prepare-dist.mjs prepare-dist",
+    "postpack": "node ./scripts/prepare-dist.mjs postpack",
+    "prepack": "bun run build && node ./scripts/prepare-dist.mjs prepack",
+    "prepublishOnly": "bun run typecheck && bun run verify:pack",
+    "typecheck": "tsc --noEmit",
+    "verify:pack": "node ./scripts/verify-pack.mjs"
+  },
+  "dependencies": {
+    "@package/logger-adapter": "npm:@trebired/logger-adapter@^0.2.3",
+    "@package/result": "npm:@trebired/result@^1.0.1",
+    "fflate": "^0.8.3",
+    "semver": "^7.8.5",
+    "tar-stream": "^3.2.0"
+  },
+  "devDependencies": {
+    "@trebired/code-discipline": "^4.7.1",
+    "@types/bun": "^1.3.14",
+    "@types/node": "^24.13.3",
+    "@types/semver": "^7.7.1",
+    "@types/tar-stream": "^3.1.4",
+    "typescript": "^6.0.3"
+  },
   "keywords": [
     "update",
     "updater",
@@ -51,28 +63,15 @@
     "node",
     "bun"
   ],
-  "license": "MIT",
-  "main": "./dist/index.js",
-  "name": "@trebired/update",
-  "packageManager": "bun@1.3.12",
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Trebired/update"
   },
-  "scripts": {
-    "build": "rm -rf dist && tsc -p tsconfig.build.json && node ./scripts/prepare-dist.mjs prepare-dist",
-    "postpack": "node ./scripts/prepare-dist.mjs postpack",
-    "prepack": "bun run build && node ./scripts/prepare-dist.mjs prepack",
-    "prepublishOnly": "bun run typecheck && bun test && bun run verify:pack",
-    "test": "bun -e \"console.log(\\\"No tests configured.\\\")\"",
-    "typecheck": "tsc --noEmit",
-    "verify:pack": "node ./scripts/verify-pack.mjs"
+  "homepage": "https://github.com/Trebired/update#readme",
+  "bugs": {
+    "url": "https://github.com/Trebired/update/issues"
   },
-  "type": "module",
-  "types": "./dist/index.d.ts",
-  "version": "1.0.2"
+  "publishConfig": {
+    "access": "public"
+  }
 }

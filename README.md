@@ -371,7 +371,3 @@ This package does not:
 - choose product update channels, UI, service manager, or transport
 - host artifacts or sign manifests for callers
 - activate updates without caller-owned policy
-
-## License
-
-Licensed under MIT. See [LICENSE](./LICENSE).

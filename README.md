@@ -8,13 +8,13 @@ It does not know about any specific repository, deployment system, service manag
 
 ## Install
 
-Runtime support: Bun 1+ and Node.js 18+.
+Runtime support: Bun 1+.
 
 ```sh
-npm install @trebired/update
+bun i @trebired/update
 ```
 
-## Layers
+## Quick Start
 
 The package now exposes three adoption levels:
 

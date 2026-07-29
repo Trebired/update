@@ -24,7 +24,9 @@ The package now exposes three adoption levels:
 
 Release channels are accepted as optional legacy metadata, but they are no longer required by the new core runtime, manifest, selection, or persisted-state flows.
 
-## Self-Managed Flow
+## Concepts
+
+### Self-Managed Flow
 
 Use `checkForUpdate`, `prepareUpdate`, `applyPreparedUpdate`, `applyUpdate`, `resumeUpdate`, and `createUpdateScheduler` when the updating process owns its own lifecycle:
 
@@ -87,7 +89,7 @@ scheduler.start();
 
 `start()` runs one check immediately, then polls on the configured interval. Scheduled runs are single-flight, interval timers are unref'd by default, and background errors are swallowed after `onError` is called. `triggerNow()` still returns the run promise for callers that want to handle success or failure directly.
 
-## Controller-Managed Rollout
+### Controller-Managed Rollout
 
 Use rollout planning and instruction helpers when a controller chooses artifacts for many targets while transports stay outside the library:
 
@@ -129,7 +131,7 @@ const summary = summarizeRollout({
 
 Delivery, acknowledgement collection, and apply-result collection are transport interfaces. The library defines the contracts but does not ship a transport.
 
-## Core Primitives
+### Core Primitives
 
 Low-level consumers can compose the runtime directly:
 
@@ -161,7 +163,7 @@ Key capabilities:
 - update instruction creation and verification
 - batch rollout planning and summary types
 
-## Compatibility, Counterparts, Fleet State, and Resources
+### Compatibility, Counterparts, Fleet State, and Resources
 
 Compatibility sets describe exact certified combinations. They are explicit released combinations, not semver ranges:
 
@@ -271,7 +273,7 @@ await installResourceBundle({
 const meta = await readInstalledResourceMeta(targetDirectory);
 ```
 
-## Compatibility Helpers
+### Compatibility Helpers
 
 The previous surface remains available for incremental migration:
 
@@ -287,7 +289,7 @@ The previous surface remains available for incremental migration:
 
 These helpers now wrap the newer primitives and flows. Legacy channel-aware behavior remains available through those wrappers when a consumer still depends on it.
 
-## Security Defaults
+### Security Defaults
 
 - invalid manifest signatures are rejected
 - invalid instruction signatures are rejected
@@ -301,6 +303,8 @@ These helpers now wrap the newer primitives and flows. Legacy channel-aware beha
 - rollback state is preserved before staged binary replacement
 
 ## Public API
+
+### Runtime Exports
 
 High-level flows:
 
@@ -359,3 +363,15 @@ Download, install, and activation primitives:
 - `executePackageInstall`
 - `activateStagedArtifact`
 - `rollbackActivatedArtifact`
+
+## What It Does Not Do
+
+This package does not:
+
+- choose product update channels, UI, service manager, or transport
+- host artifacts or sign manifests for callers
+- activate updates without caller-owned policy
+
+## License
+
+Licensed under MIT. See [LICENSE](./LICENSE).

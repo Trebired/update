@@ -28,6 +28,7 @@
   "#index": "./src/index.ts",
   "#kn5mninc2td8": "./src/types/index.ts",
   "#l096egsunhw2": "./scripts/verify-pack.mjs",
+  "#m68r6jyxlhgm": "./scripts/build/generated/tsconfig.mjs",
   "#manifest": "./src/manifest.ts",
   "#normalization": "./src/normalization.ts",
   "#o2bxrdgamjud": "./src/types/compatibility.ts",

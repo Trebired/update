@@ -9,16 +9,7 @@ import {
   readString,
 } from "#normalization";
 import { verifyManifestSignature } from "#verify";
-import type {
-  FetchManifestFromSourcesInput,
-  FetchedManifest,
-  FetchedManifestSource,
-  UpdateFetch,
-  UpdateManifest,
-  UpdateManifestSource,
-  UpdateNormalizationOptions,
-  UpdateVerificationKeyInput,
-} from "#types";
+import { FetchManifestFromSourcesInput, FetchedManifest, FetchedManifestSource, UpdateFetch, UpdateManifest, UpdateNormalizationOptions, UpdateVerificationKeyInput } from "#types";
 
 const DEFAULT_MANIFEST_ALIASES = {
   artifacts: ["artifacts", "files", "packages"],

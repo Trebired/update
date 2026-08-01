@@ -1,12 +1,6 @@
 import { rollbackActivatedArtifact } from "#activate";
 import { ensureRemoved } from "#fs";
-import type {
-  AppliedUpdateResult,
-  ApplyPreparedUpdateInput,
-  PreparedUpdate,
-  UpdateClientConfig,
-  UpdateRestartController,
-} from "#types";
+import { AppliedUpdateResult, ApplyPreparedUpdateInput, PreparedUpdate, UpdateRestartController } from "#types";
 import { emitLifecycle } from "./lifecycle.js";
 import { toError } from "./shared.js";
 

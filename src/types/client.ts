@@ -5,21 +5,7 @@ import type {
   UpdateVerificationKeyInput,
   UpdateVersionReader,
 } from "./core.js";
-import type {
-  ActivateStagedArtifactResult,
-  AppliedUpdateResult,
-  ApplyUpdateInput,
-  DownloadArtifactResult,
-  FetchedManifest,
-  PrepareUpdateInput,
-  StageArtifactResult,
-  UpdateCheckInput,
-  UpdateCheckResult,
-  UpdateClientConfig,
-  UpdateScheduler,
-  UpdateSchedulerConfig,
-  VerifyDownloadedArtifactResult,
-} from "./runtime-compat.js";
+import { ActivateStagedArtifactResult, AppliedUpdateResult, ApplyUpdateInput, DownloadArtifactResult, FetchedManifest, StageArtifactResult, UpdateCheckInput, UpdateCheckResult, UpdateClientConfig, UpdateScheduler, UpdateSchedulerConfig, VerifyDownloadedArtifactResult } from "./runtime-compat.js";
 import type {
   UpdateJournalStore,
   UpdateLifecycleHandler,

@@ -24,7 +24,7 @@
     "dist",
     "node_modules"
   ],
-  "extends": "./.code-discipline/generated/tsconfig.paths.json",
+  "extends": "./.trebired/code-discipline/generated/tsconfig.paths.json",
   "include": [
     "src/**/*.ts",
     "tb.code-discipline.ts"

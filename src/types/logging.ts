@@ -24,4 +24,4 @@ export type UpdateStatusEvent = {
   result?: ResultLike;
 };
 
-export type UpdateStatusHandler = (event: UpdateStatusEvent) => void | Promise<void>;
+export type UpdateStatusHandler = (event: UpdateStatusEvent) => void |Promise<void>;

@@ -26,14 +26,14 @@ async function main() {
 
 async function resetTempRoot() {
   await fs.rm(tempRoot, {
-    force: true,
-    recursive: true,
+      force: true,
+      recursive: true,
   });
   await fs.mkdir(tempRoot, {
-    recursive: true,
+      recursive: true,
   });
   await fs.mkdir(npmCacheDir, {
-    recursive: true,
+      recursive: true,
   });
 }
 
@@ -42,11 +42,11 @@ function packPackage() {
 
   try {
     execFileSync("sh", [
-      "-lc",
-      `npm pack --json > ${shellEscape(stdoutPath)}`,
-    ], {
-      ...createNpmOptions(rootDir),
-      stdio: ["ignore", "inherit", "inherit"],
+        "-lc",
+        `npm pack --json > ${shellEscape(stdoutPath)}`,
+      ], {
+        ...createNpmOptions(rootDir),
+        stdio: ["ignore", "inherit", "inherit"],
     });
   }
   catch (error) {
@@ -55,8 +55,8 @@ function packPackage() {
   }
 
   const stdout = execFileSync("cat", [stdoutPath], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "inherit"],
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "inherit"],
   });
   const [entry] = JSON.parse(stdout);
 
@@ -69,8 +69,8 @@ function packPackage() {
 
 function listTarEntries(tarballPath) {
   const stdout = execFileSync("tar", ["-tf", tarballPath], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "inherit"],
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "inherit"],
   });
 
   return new Set(stdout
@@ -81,8 +81,8 @@ function listTarEntries(tarballPath) {
 
 function readPackedPackageJson(tarballPath) {
   const stdout = execFileSync("tar", ["-xOf", tarballPath, "package/package.json"], {
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "inherit"],
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "inherit"],
   });
 
   return JSON.parse(stdout);
@@ -162,7 +162,7 @@ async function runConsumerSmokeTest(tarballPath) {
   const consumerDir = path.join(tempRoot, "consumer");
 
   await fs.mkdir(consumerDir, {
-    recursive: true,
+      recursive: true,
   });
 
   await writeConsumerPackageJson(consumerDir, tarballPath);
@@ -175,71 +175,71 @@ async function runConsumerSmokeTest(tarballPath) {
 
 async function writeConsumerPackageJson(consumerDir, tarballPath) {
   await fs.writeFile(path.join(consumerDir, "package.json"), JSON.stringify({
-    name: "update-pack-smoke",
-    private: true,
-    type: "module",
-    dependencies: {
-      "@package/update": `file:${tarballPath}`,
-    },
-    devDependencies: {
-      "@types/node": `file:${nodeTypesDir}`,
-    },
-  }, null, 2));
+        name: "update-pack-smoke",
+        private: true,
+        type: "module",
+        dependencies: {
+          "@package/update": `file:${tarballPath}`,
+        },
+        devDependencies: {
+          "@types/node": `file:${nodeTypesDir}`,
+        },
+      }, null, 2));
 }
 
 async function writeConsumerSourceFiles(consumerDir) {
   await fs.writeFile(path.join(consumerDir, "index.ts"), [
-    'import { createUpdateClient, verifySecondaryUpdateInstruction } from "@package/update";',
-    "",
-    "console.log(typeof createUpdateClient, typeof verifySecondaryUpdateInstruction);",
-  ].join("\n"));
+      'import { createUpdateClient, verifySecondaryUpdateInstruction } from "@package/update";',
+      "",
+      "console.log(typeof createUpdateClient, typeof verifySecondaryUpdateInstruction);",
+    ].join("\n"));
 
   await fs.writeFile(path.join(consumerDir, "runtime.mjs"), [
-    'import { fetchManifest, planSelfUpdate } from "@package/update";',
-    "",
-    "console.log(typeof fetchManifest, typeof planSelfUpdate);",
-  ].join("\n"));
+      'import { fetchManifest, planSelfUpdate } from "@package/update";',
+      "",
+      "console.log(typeof fetchManifest, typeof planSelfUpdate);",
+    ].join("\n"));
 }
 
 async function writeConsumerTsconfig(consumerDir) {
   await fs.writeFile(path.join(consumerDir, "tsconfig.json"), JSON.stringify({
-    compilerOptions: {
-      lib: [
-        "ES2020",
-        "DOM",
-      ],
-      module: "ESNext",
-      moduleResolution: "Bundler",
-      noEmit: true,
-      target: "ES2020",
-      types: [
-        "node",
-      ],
-    },
-    include: [
-      "./index.ts",
-    ],
-  }, null, 2));
+        compilerOptions: {
+          lib: [
+            "ES2020",
+            "DOM",
+          ],
+          module: "ESNext",
+          moduleResolution: "Bundler",
+          noEmit: true,
+          target: "ES2020",
+          types: [
+            "node",
+          ],
+        },
+        include: [
+          "./index.ts",
+        ],
+      }, null, 2));
 }
 
 function runConsumerInstall(consumerDir) {
   execFileSync("npm", ["install", "--ignore-scripts"], {
-    ...createNpmOptions(consumerDir),
-    stdio: "inherit",
+      ...createNpmOptions(consumerDir),
+      stdio: "inherit",
   });
 }
 
 function runConsumerTypecheck(consumerDir) {
   execFileSync(process.execPath, [tscBin, "-p", "tsconfig.json"], {
-    cwd: consumerDir,
-    stdio: "inherit",
+      cwd: consumerDir,
+      stdio: "inherit",
   });
 }
 
 function runConsumerRuntime(consumerDir) {
   execFileSync("node", ["runtime.mjs"], {
-    cwd: consumerDir,
-    stdio: "inherit",
+      cwd: consumerDir,
+      stdio: "inherit",
   });
 }
 
@@ -256,20 +256,20 @@ function createNpmOptions(cwd) {
 function restorePackageJsonFromBackup() {
   try {
     execFileSync("sh", [
-      "-lc",
-      `if [ -f ${shellEscape(packageJsonBackupPath)} ]; then cp ${shellEscape(packageJsonBackupPath)} ${shellEscape(path.join(rootDir, "package.json"))}; fi`,
-    ], {
-      cwd: rootDir,
-      stdio: "inherit",
+        "-lc",
+        `if [ -f ${shellEscape(packageJsonBackupPath)} ]; then cp ${shellEscape(packageJsonBackupPath)} ${shellEscape(path.join(rootDir, "package.j" +
+          "son"))}; fi`,
+      ], {
+        cwd: rootDir,
+        stdio: "inherit",
     });
   }
   catch {
-    // best effort only
   }
 }
 
 function shellEscape(value) {
   return `'${String(value).replace(/'/gu, `'\\''`)}'`;
-}
+  }
 
-await main();
+  await main();

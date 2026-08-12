@@ -10,9 +10,9 @@ import { normalizeArchiveEntryPath, safeJoinWithin } from "#paths";
 export type ArchiveFormat = "tar.gz" | "zip";
 
 export async function extractArchive(input: {
-  filePath: string;
-  destinationRoot: string;
-  format?: ArchiveFormat | null;
+    filePath: string;
+    destinationRoot: string;
+    format?: ArchiveFormat | null;
 }): Promise<string[]> {
   await ensureDirectory(input.destinationRoot);
 
@@ -71,14 +71,14 @@ async function extractTarGz(filePath: string, destinationRoot: string): Promise<
   const buffer = Buffer.from(await readFileBytes(filePath));
 
   await new Promise<void>((resolve, reject) => {
-    extract.on("entry", (header, stream, next) => {
-      handleTarEntry(destinationRoot, String(header.name ?? ""), String(header.type ?? "file"), header.mode ?? 0o644, stream)
-        .then(() => next())
-        .catch(reject);
-    });
-    extract.on("finish", () => resolve());
-    extract.on("error", reject);
-    extract.end(gunzipSync(buffer));
+      extract.on("entry", (header, stream, next) => {
+          handleTarEntry(destinationRoot, String(header.name ?? ""), String(header.type ??"file"), header.mode ?? 0o644, stream)
+          .then(() => next())
+          .catch (reject);
+      });
+      extract.on("finish", () => resolve());
+      extract.on("error", reject);
+      extract.end(gunzipSync(buffer));
   });
 }
 
@@ -105,7 +105,7 @@ async function handleTarEntry(destinationRoot: string, name: string, type: strin
   }
 
   await fs.writeFile(targetPath, Buffer.concat(chunks), {
-    mode,
+      mode,
   });
 }
 
@@ -123,7 +123,7 @@ async function extractZipArchive(filePath: string, destinationRoot: string): Pro
 
     await ensureDirectory(path.dirname(targetPath));
     await fs.writeFile(targetPath, Buffer.from(bytes), {
-      mode: 0o644,
+        mode: 0o644,
     });
   }
 }

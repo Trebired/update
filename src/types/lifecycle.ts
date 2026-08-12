@@ -1,19 +1,19 @@
 import type { UpdateArtifact, UpdateManifest, UpdateSubject } from "./core.js";
 
 export type UpdateLifecycleEvent =
-  | { type: "check.started"; operationId: string; subject: UpdateSubject }
-  | { type: "manifest.fetched"; operationId: string; manifest: UpdateManifest; sourceUrl: string }
-  | { type: "update.available"; operationId: string; manifest: UpdateManifest; artifact: UpdateArtifact }
-  | { type: "no.update"; operationId: string; manifest: UpdateManifest; reason: string }
-  | { type: "apply.started"; operationId: string; artifact: UpdateArtifact; releaseVersion: string }
-  | { type: "stage.started" | "stage.succeeded" | "stage.failed"; operationId: string; artifact: UpdateArtifact; error?: Error }
-  | { type: "activate.started" | "activate.succeeded" | "activate.failed"; operationId: string; artifact: UpdateArtifact; error?: Error }
-  | { type: "rollback.started" | "rollback.succeeded" | "rollback.failed"; operationId: string; rollback?: ActivationRollbackState; error?: Error }
-  | { type: "cleanup.started" | "cleanup.succeeded" | "cleanup.failed"; operationId: string; artifact?: UpdateArtifact; error?: Error }
-  | { type: "restart.required"; operationId: string; artifact: UpdateArtifact; releaseVersion: string }
-  | { type: "apply.succeeded" | "apply.failed"; operationId: string; artifact: UpdateArtifact; error?: Error };
+| { type: "check.started"; operationId: string; subject: UpdateSubject }
+| { type: "manifest.fetched"; operationId: string; manifest: UpdateManifest; sourceUrl: string }
+| { type: "update.available"; operationId: string; manifest: UpdateManifest; artifact: UpdateArtifact }
+| { type: "no.update"; operationId: string; manifest: UpdateManifest; reason: string }
+| { type: "apply.started"; operationId: string; artifact: UpdateArtifact; releaseVersion: string }
+| { type: "stage.started" | "stage.succeeded" | "stage.failed"; operationId: string; artifact: UpdateArtifact; error?: Error }
+| { type: "activate.started" | "activate.succeeded" | "activate.failed"; operationId: string; artifact: UpdateArtifact; error?: Error }
+| { type: "rollback.started" | "rollback.succeeded" | "rollback.failed"; operationId: string; rollback?: ActivationRollbackState; error?: Error }
+| { type: "cleanup.started" | "cleanup.succeeded" | "cleanup.failed"; operationId: string; artifact?: UpdateArtifact; error?: Error }
+| { type: "restart.required"; operationId: string; artifact: UpdateArtifact; releaseVersion: string }
+| { type: "apply.succeeded" | "apply.failed"; operationId: string; artifact: UpdateArtifact; error?: Error };
 
-export type UpdateLifecycleHandler = (event: UpdateLifecycleEvent) => void | Promise<void>;
+export type UpdateLifecycleHandler = (event: UpdateLifecycleEvent) => void |Promise<void>;
 
 export type UpdateDownloadCheckpoint = {
   url: string;
@@ -35,17 +35,17 @@ export type UpdateStateSnapshot = {
   operationId: string;
   flow: "check" | "apply" | "rollout";
   phase:
-    | "planned"
-    | "manifest-fetched"
-    | "update-selected"
-    | "downloaded"
-    | "verified"
-    | "staged"
-    | "installed"
-    | "activated"
-    | "rollback-complete"
-    | "cleanup-complete"
-    | "failed";
+  |"planned"
+  |"manifest-fetched"
+  |"update-selected"
+  |"downloaded"
+  |"verified"
+  |"staged"
+  |"installed"
+  |"activated"
+  |"rollback-complete"
+  |"cleanup-complete"
+  |"failed";
   subject?: UpdateSubject;
   manifest?: UpdateManifest;
   artifact?: UpdateArtifact | null;
@@ -58,12 +58,12 @@ export type UpdateStateSnapshot = {
 };
 
 export type UpdateStateStore = {
-  load(operationId: string): Promise<UpdateStateSnapshot | null>;
+  load(operationId: string): Promise<UpdateStateSnapshot|null>;
   save(snapshot: UpdateStateSnapshot): Promise<void>;
   remove(operationId: string): Promise<void>;
 };
 
-export type UpdateJournalEntry = UpdateLifecycleEvent & {
+export type UpdateJournalEntry = UpdateLifecycleEvent& {
   at: string;
 };
 
@@ -73,24 +73,24 @@ export type UpdateJournalStore = {
 };
 
 export type UpdateLockStore = {
-  acquire(key: string): Promise<{ release(): Promise<void> }>;
+  acquire(key: string): Promise<{release():Promise<void>}>;
 };
 
 export type UpdateRestartDecision = "restart-now" | "defer";
 
 export type UpdateRestartController = {
   request(context: {
-    operationId: string;
-    artifact: UpdateArtifact;
-    releaseVersion: string;
-    targetPath?: string;
-  }): Promise<UpdateRestartDecision> | UpdateRestartDecision;
-  perform?(context: {
-    operationId: string;
-    artifact: UpdateArtifact;
-    releaseVersion: string;
-    targetPath?: string;
-  }): Promise<void> | void;
+      operationId: string;
+      artifact: UpdateArtifact;
+      releaseVersion: string;
+      targetPath?: string;
+  }): Promise<UpdateRestartDecision>|UpdateRestartDecision;
+  perform ? (context: {
+      operationId: string;
+      artifact: UpdateArtifact;
+      releaseVersion: string;
+      targetPath?: string;
+  }) : Promise<void>|void;
 };
 
 export type UpdatePackageInstallResult = {
@@ -101,9 +101,9 @@ export type UpdatePackageInstallResult = {
 
 export type UpdatePackageInstaller = {
   install(input: {
-    artifact: UpdateArtifact;
-    filePath: string;
-    workingDirectory: string;
-    lifecycle?: UpdateLifecycleHandler;
+      artifact: UpdateArtifact;
+      filePath: string;
+      workingDirectory: string;
+      lifecycle?: UpdateLifecycleHandler;
   }): Promise<UpdatePackageInstallResult>;
 };

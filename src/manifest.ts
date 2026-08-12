@@ -9,7 +9,15 @@ import {
   readString,
 } from "#normalization";
 import { verifyManifestSignature } from "#verify";
-import { FetchManifestFromSourcesInput, FetchedManifest, FetchedManifestSource, UpdateFetch, UpdateManifest, UpdateNormalizationOptions, UpdateVerificationKeyInput } from "#types";
+import {
+  FetchManifestFromSourcesInput,
+  FetchedManifest,
+  FetchedManifestSource,
+  UpdateFetch,
+  UpdateManifest,
+  UpdateNormalizationOptions,
+  UpdateVerificationKeyInput,
+} from "./types";
 
 const DEFAULT_MANIFEST_ALIASES = {
   artifacts: ["artifacts", "files", "packages"],
@@ -23,23 +31,27 @@ const DEFAULT_MANIFEST_ALIASES = {
 } as const;
 
 export async function fetchManifest(input: {
-  authHeader?: Record<string, string> | null;
-  fetchImpl?: UpdateFetch;
-  manifestUrl: string;
-  normalization?: UpdateNormalizationOptions;
-  verificationKeys?: UpdateVerificationKeyInput[];
+    authHeader?: Record<string, string>|null;
+    fetchImpl?: UpdateFetch;
+    manifestUrl: string;
+    normalization?: UpdateNormalizationOptions;
+    verificationKeys?: UpdateVerificationKeyInput[];
 }): Promise<FetchedManifest> {
   const result = await fetchManifestFromSources({
-    fetchImpl: input.fetchImpl,
-    normalization: input.normalization,
-    sources: [{
-      auth: input.authHeader ? {
-        type: "headers",
-        headers: input.authHeader,
-      } : null,
-      url: input.manifestUrl,
-    }],
-    verificationKeys: input.verificationKeys,
+      fetchImpl: input.fetchImpl,
+      normalization: input.normalization,
+      sources: [
+        {
+          auth: input.authHeader
+          ? {
+            type: "headers",
+            headers: input.authHeader,
+          }
+          : null,
+          url: input.manifestUrl,
+        },
+      ],
+      verificationKeys: input.verificationKeys,
   });
 
   return {
@@ -48,24 +60,28 @@ export async function fetchManifest(input: {
   };
 }
 
-export async function fetchManifestFromSources(input: FetchManifestFromSourcesInput): Promise<FetchedManifestSource> {
+export async function fetchManifestFromSources(
+  input: FetchManifestFromSourcesInput,
+): Promise<FetchedManifestSource> {
   const fetchImpl = input.fetchImpl ?? globalThis.fetch;
-  const sources = input.sources.map((source) => typeof source === "string"
-    ? { url: source, auth: null }
-    : source);
+  const sources = input.sources.map((source) =>
+    typeof source === "string" ? { url: source, auth: null } : source,
+  );
   let lastError: Error | null = null;
 
   for (const [index, source] of sources.entries()) {
     try {
       const response = await fetchImpl(source.url, {
-        headers: await resolveAuthHeaders(source.auth, {
-          purpose: "manifest",
-          url: source.url,
-        }),
+          headers: await resolveAuthHeaders(source.auth, {
+              purpose: "manifest",
+              url: source.url,
+          }),
       });
 
       if (!response.ok) {
-        throw new Error(`Manifest request failed with status ${response.status}.`);
+        throw new Error(
+          `Manifest request failed with status ${response.status}.`,
+        );
       }
 
       const raw = await response.json();
@@ -81,8 +97,7 @@ export async function fetchManifestFromSources(input: FetchManifestFromSourcesIn
         sourceIndex: index,
         sourceUrl: source.url,
       };
-    }
-    catch (error) {
+    } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
     }
   }
@@ -90,7 +105,10 @@ export async function fetchManifestFromSources(input: FetchManifestFromSourcesIn
   throw lastError ?? new Error("No manifest sources were provided.");
 }
 
-export function normalizeManifest(raw: unknown, options: UpdateNormalizationOptions = {}): UpdateManifest {
+export function normalizeManifest(
+  raw: unknown,
+  options: UpdateNormalizationOptions = {},
+): UpdateManifest {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new Error("Manifest payload must be an object.");
   }
@@ -99,23 +117,62 @@ export function normalizeManifest(raw: unknown, options: UpdateNormalizationOpti
   const allowAliases = options.allowFieldAliases ?? true;
   const aliases = options.fieldAliases?.manifest ?? {};
 
-  const entity = readString(record, aliases.entity ?? DEFAULT_MANIFEST_ALIASES.entity, allowAliases);
-  const artifactsRaw = readArray(record, aliases.artifacts ?? DEFAULT_MANIFEST_ALIASES.artifacts, allowAliases);
+  const entity = readString(
+    record,
+    aliases.entity ?? DEFAULT_MANIFEST_ALIASES.entity,
+    allowAliases,
+  );
+  const artifactsRaw = readArray(
+    record,
+    aliases.artifacts ?? DEFAULT_MANIFEST_ALIASES.artifacts,
+    allowAliases,
+  );
 
   return {
     version: 1,
     entity,
-    channel: readOptionalString(record, aliases.channel ?? DEFAULT_MANIFEST_ALIASES.channel, allowAliases),
-    releaseVersion: readString(record, aliases.releaseVersion ?? DEFAULT_MANIFEST_ALIASES.releaseVersion, allowAliases),
-    recordedAt: readString(record, aliases.recordedAt ?? DEFAULT_MANIFEST_ALIASES.recordedAt, allowAliases),
-    minimumSupportedVersion: readOptionalString(record, aliases.minimumSupportedVersion ?? DEFAULT_MANIFEST_ALIASES.minimumSupportedVersion, allowAliases),
-    notes: normalizeNotes(readOptionalRecord(record, aliases.notes ?? DEFAULT_MANIFEST_ALIASES.notes, allowAliases)),
-    artifacts: artifactsRaw.map((entry) => normalizeArtifact(entry, entity, allowAliases)),
-    signature: normalizeSignature(readRecord(record, aliases.signature ?? DEFAULT_MANIFEST_ALIASES.signature, allowAliases)),
+    channel: readOptionalString(
+      record,
+      aliases.channel ?? DEFAULT_MANIFEST_ALIASES.channel,
+      allowAliases,
+    ),
+    releaseVersion: readString(
+      record,
+      aliases.releaseVersion ?? DEFAULT_MANIFEST_ALIASES.releaseVersion,
+      allowAliases,
+    ),
+    recordedAt: readString(
+      record,
+      aliases.recordedAt ?? DEFAULT_MANIFEST_ALIASES.recordedAt,
+      allowAliases,
+    ),
+    minimumSupportedVersion: readOptionalString(
+      record,
+      aliases.minimumSupportedVersion ??
+      DEFAULT_MANIFEST_ALIASES.minimumSupportedVersion,
+      allowAliases,
+    ),
+    notes: normalizeNotes(
+      readOptionalRecord(
+        record,
+        aliases.notes ?? DEFAULT_MANIFEST_ALIASES.notes,
+        allowAliases,
+      ),
+    ),
+    artifacts: artifactsRaw.map((entry) =>
+      normalizeArtifact(entry, entity, allowAliases),
+    ),
+    signature: normalizeSignature(
+      readRecord(
+        record,
+        aliases.signature ?? DEFAULT_MANIFEST_ALIASES.signature,
+        allowAliases,
+      ),
+    ),
   };
 }
 
-function normalizeNotes(value: Record<string, unknown> | null) {
+function normalizeNotes(value: Record<string, unknown>|null) {
   if (!value) {
     return null;
   }

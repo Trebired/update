@@ -1,11 +1,11 @@
 import { rollbackActivatedArtifact } from "#activate";
 import { ensureRemoved } from "#fs";
-import { AppliedUpdateResult, ApplyPreparedUpdateInput, PreparedUpdate, UpdateRestartController } from "#types";
+import { AppliedUpdateResult, ApplyPreparedUpdateInput, PreparedUpdate, UpdateRestartController } from "#kn5mninc2td8";
 import { emitLifecycle } from "./lifecycle.js";
 import { toError } from "./shared.js";
 
 export async function handleRestartIfNeeded(
-  input: Pick<ApplyPreparedUpdateInput, "journalStore" | "lifecycleHandler" | "restartController" | "restartHook" | "statusHandler">,
+  input: Pick<ApplyPreparedUpdateInput, "journalStore"|"lifecycleHandler"|"restartController"|"restartHook"|"statusHandler">,
   context: {
     artifact: PreparedUpdate["artifact"];
     operationId: string;
@@ -24,58 +24,58 @@ export async function handleRestartIfNeeded(
   }
 
   const decision = await controller.request({
-    artifact: context.artifact,
-    operationId: context.operationId,
-    releaseVersion: context.releaseVersion,
-    targetPath: context.targetPath,
+      artifact: context.artifact,
+      operationId: context.operationId,
+      releaseVersion: context.releaseVersion,
+      targetPath: context.targetPath,
   });
 
   if (decision === "defer") {
     await emitLifecycle(input, {
-      artifact: context.artifact,
-      operationId: context.operationId,
-      releaseVersion: context.releaseVersion,
-      type: "restart.required",
+        artifact: context.artifact,
+        operationId: context.operationId,
+        releaseVersion: context.releaseVersion,
+        type: "restart.required",
     });
     return true;
   }
 
   await controller.perform?.({
-    artifact: context.artifact,
-    operationId: context.operationId,
-    releaseVersion: context.releaseVersion,
-    targetPath: context.targetPath,
+      artifact: context.artifact,
+      operationId: context.operationId,
+      releaseVersion: context.releaseVersion,
+      targetPath: context.targetPath,
   });
   return false;
 }
 
 export async function rollbackAfterFailure(
-  input: Pick<ApplyPreparedUpdateInput, "journalStore" | "lifecycleHandler" | "statusHandler">,
+  input: Pick<ApplyPreparedUpdateInput, "journalStore"|"lifecycleHandler"|"statusHandler">,
   operationId: string,
   rollback: NonNullable<AppliedUpdateResult["activation"]>["rollback"],
 ): Promise<void> {
   await emitLifecycle(input, {
-    operationId,
-    rollback,
-    type: "rollback.started",
+      operationId,
+      rollback,
+      type: "rollback.started",
   });
 
   try {
     await rollbackActivatedArtifact({
-      rollback,
+        rollback,
     });
     await emitLifecycle(input, {
-      operationId,
-      rollback,
-      type: "rollback.succeeded",
+        operationId,
+        rollback,
+        type: "rollback.succeeded",
     });
   }
   catch (error) {
     await emitLifecycle(input, {
-      error: toError(error),
-      operationId,
-      rollback,
-      type: "rollback.failed",
+        error: toError(error),
+        operationId,
+        rollback,
+        type: "rollback.failed",
     });
     throw error;
   }
@@ -90,7 +90,7 @@ export async function cleanupPreparedArtifacts(prepared: PreparedUpdate): Promis
 }
 
 function toRestartController(
-  input: Pick<ApplyPreparedUpdateInput, "restartController" | "restartHook">,
+  input: Pick<ApplyPreparedUpdateInput, "restartController"|"restartHook">,
   context: {
     artifact: PreparedUpdate["artifact"];
     operationId: string;
@@ -107,11 +107,11 @@ function toRestartController(
   }
 
   return {
-    perform: async () => input.restartHook?.({
-      artifact: context.artifact,
-      mode: "self",
-      releaseVersion: context.releaseVersion,
-      targetPath: context.targetPath!,
+    perform: async() => input.restartHook?.({
+        artifact: context.artifact,
+        mode: "self",
+        releaseVersion: context.releaseVersion,
+        targetPath: context.targetPath!,
     }),
     request: () => "restart-now",
   };

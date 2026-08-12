@@ -6,7 +6,7 @@ import type {
   PrepareUpdateInput,
   PreparedUpdate,
   UpdateCheckResult,
-} from "#types";
+} from "#kn5mninc2td8";
 import { emitLifecycle } from "./lifecycle.js";
 import { checkForUpdate } from "./check.js";
 import { createSnapshot } from "./snapshots.js";
@@ -14,9 +14,9 @@ import { createFlowLockKey, saveSnapshot, toError, toPackageSnapshotInput } from
 
 export async function prepareUpdate(input: PrepareUpdateInput): Promise<PreparedUpdate> {
   const check = input.check ?? await checkForUpdate({
-    ...input,
-    operationId: input.operationId,
-    subject: input.subject,
+      ...input,
+      operationId: input.operationId,
+      subject: input.subject,
   });
 
   assertUpdateAvailable(check);
@@ -24,9 +24,9 @@ export async function prepareUpdate(input: PrepareUpdateInput): Promise<Prepared
   const lockKey = input.lockKey ?? createFlowLockKey("apply", check.subject);
 
   return withUpdateLock({
-    key: lockKey,
-    lockStore: input.lockStore,
-  }, async () => runPrepareFlow(input, check, operationId));
+      key: lockKey,
+      lockStore: input.lockStore,
+    }, async() => runPrepareFlow(input, check, operationId));
 }
 
 function assertUpdateAvailable(check: UpdateCheckResult) {
@@ -39,37 +39,42 @@ async function runPrepareFlow(input: PrepareUpdateInput, check: UpdateCheckResul
   const artifact = check.artifact!;
   const download = await downloadAndVerify(input, check, artifact, operationId);
   return isPackageArtifact(artifact.installStrategy)
-    ? preparePackageUpdate(input, check, artifact, download, operationId)
-    : prepareStagedUpdate(input, check, artifact, download, operationId);
+  ? preparePackageUpdate(input, check, artifact, download, operationId)
+  : prepareStagedUpdate(input, check, artifact, download, operationId);
 }
 
-async function downloadAndVerify(input: PrepareUpdateInput, check: UpdateCheckResult, artifact: NonNullable<UpdateCheckResult["artifact"]>, operationId: string) {
+async function downloadAndVerify(
+  input: PrepareUpdateInput,
+  check: UpdateCheckResult,
+  artifact: NonNullable<UpdateCheckResult["artifact"]>,
+  operationId: string
+) {
   const download = await downloadArtifact({
-    artifact,
-    auth: input.auth,
-    fetchImpl: input.fetchImpl,
-    lifecycleHandler: input.lifecycleHandler,
-    mirrors: artifact.mirrors,
-    resumeFrom: input.resumeFrom ?? check.snapshot.download ?? null,
-    statusHandler: input.statusHandler,
-    workingDirectory: input.workingDirectory,
+      artifact,
+      auth: input.auth,
+      fetchImpl: input.fetchImpl,
+      lifecycleHandler: input.lifecycleHandler,
+      mirrors: artifact.mirrors,
+      resumeFrom: input.resumeFrom ?? check.snapshot.download ?? null,
+      statusHandler: input.statusHandler,
+      workingDirectory: input.workingDirectory,
   });
   await saveSnapshot(input, createSnapshot({
-    artifact,
-    download,
-    ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
-    phase: "downloaded",
+        artifact,
+        download,
+        ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
+        phase: "downloaded",
   }));
 
   const verification = await verifyDownloadedArtifact({
-    artifact,
-    filePath: download.filePath,
+      artifact,
+      filePath: download.filePath,
   });
   await saveSnapshot(input, createSnapshot({
-    artifact,
-    download,
-    ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
-    phase: "verified",
+        artifact,
+        download,
+        ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
+        phase: "verified",
   }));
 
   return { download, verification };
@@ -87,10 +92,10 @@ async function preparePackageUpdate(
   operationId: string,
 ): Promise<PreparedUpdate> {
   const snapshot = createSnapshot({
-    artifact,
-    download: downloadState.download,
-    ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
-    phase: "verified",
+      artifact,
+      download: downloadState.download,
+      ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
+      phase: "verified",
   });
 
   return {
@@ -115,29 +120,29 @@ async function prepareStagedUpdate(
   operationId: string,
 ): Promise<PreparedUpdate> {
   await emitLifecycle(input, {
-    artifact,
-    operationId,
-    type: "stage.started",
+      artifact,
+      operationId,
+      type: "stage.started",
   });
 
   try {
     const stage = await stageArtifact({
-      artifact,
-      download: downloadState.download,
-      statusHandler: input.statusHandler,
-      workingDirectory: input.workingDirectory,
+        artifact,
+        download: downloadState.download,
+        statusHandler: input.statusHandler,
+        workingDirectory: input.workingDirectory,
     });
     const snapshot = createSnapshot({
-      artifact,
-      download: downloadState.download,
-      ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
-      phase: "staged",
+        artifact,
+        download: downloadState.download,
+        ...toPackageSnapshotInput(input, check.manifest, operationId, check.subject),
+        phase: "staged",
     });
     await saveSnapshot(input, snapshot);
     await emitLifecycle(input, {
-      artifact,
-      operationId,
-      type: "stage.succeeded",
+        artifact,
+        operationId,
+        type: "stage.succeeded",
     });
 
     return {
@@ -155,10 +160,10 @@ async function prepareStagedUpdate(
   }
   catch (error) {
     await emitLifecycle(input, {
-      artifact,
-      error: toError(error),
-      operationId,
-      type: "stage.failed",
+        artifact,
+        error: toError(error),
+        operationId,
+        type: "stage.failed",
     });
     throw error;
   }

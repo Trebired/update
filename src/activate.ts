@@ -8,7 +8,7 @@ import type {
   ActivateStagedArtifactInput,
   ActivateStagedArtifactResult,
   RollbackActivatedArtifactInput,
-} from "#types";
+} from "./types";
 
 export async function activateStagedArtifact(input: ActivateStagedArtifactInput): Promise<ActivateStagedArtifactResult> {
   const livePath = input.target.livePath;
@@ -33,10 +33,10 @@ export async function activateStagedArtifact(input: ActivateStagedArtifactInput)
 
     if (input.restartHook) {
       await input.restartHook({
-        artifact: input.artifact,
-        mode: "self",
-        releaseVersion: input.releaseVersion,
-        targetPath: livePath,
+          artifact: input.artifact,
+          mode: "self",
+          releaseVersion: input.releaseVersion,
+          targetPath: livePath,
       });
     }
 

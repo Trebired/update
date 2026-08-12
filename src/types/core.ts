@@ -57,13 +57,42 @@ export type UpdateSubject = {
   installStrategy: UpdateInstallStrategy;
 };
 
-export type UpdateRuntimeTarget = UpdateSubject & {
+export type UpdateRuntimeTarget = UpdateSubject& {
   channel?: string | null;
 };
 
 export type UpdateManifestFieldAliases = {
-  manifest?: Partial<Record<"entity" | "channel" | "releaseVersion" | "recordedAt" | "minimumSupportedVersion" | "notes" | "artifacts" | "signature", string[]>>;
-  artifact?: Partial<Record<"id" | "entity" | "channel" | "os" | "arch" | "installStrategy" | "archiveFormat" | "binaryPath" | "url" | "mirrors" | "checksum" | "size" | "fileName", string[]>>;
+  manifest?: Partial<
+  Record<
+  |"entity"
+  |"channel"
+  |"releaseVersion"
+  |"recordedAt"
+  |"minimumSupportedVersion"
+  |"notes"
+  |"artifacts"
+  |"signature",
+  string[]
+  >
+  >;
+  artifact?: Partial<
+  Record<
+  |"id"
+  |"entity"
+  |"channel"
+  |"os"
+  |"arch"
+  |"installStrategy"
+  |"archiveFormat"
+  |"binaryPath"
+  |"url"
+  |"mirrors"
+  |"checksum"
+  |"size"
+  |"fileName",
+  string[]
+  >
+  >;
 };
 
 export type UpdateNormalizationOptions = {
@@ -72,26 +101,26 @@ export type UpdateNormalizationOptions = {
 };
 
 export type UpdateVerificationKeyInput =
-  | string
-  | Uint8Array
-  | Buffer
-  | KeyObject
-  | {
-    key: string | Uint8Array | Buffer | KeyObject;
-    format?: "pem" | "raw" | "raw-base64" | "base64" | "base64url";
-    keyId?: string;
-  };
+|string
+|Uint8Array
+|Buffer
+|KeyObject
+| {
+  key: string | Uint8Array | Buffer | KeyObject;
+  format?: "pem" | "raw" | "raw-base64" | "base64" | "base64url";
+  keyId?: string;
+};
 
 export type UpdateSigningKeyInput =
-  | string
-  | Uint8Array
-  | Buffer
-  | KeyObject
-  | {
-    key: string | Uint8Array | Buffer | KeyObject;
-    format?: "pem" | "pkcs8-pem" | "pkcs8-der";
-    keyId?: string;
-  };
+|string
+|Uint8Array
+|Buffer
+|KeyObject
+| {
+  key: string | Uint8Array | Buffer | KeyObject;
+  format?: "pem" | "pkcs8-pem" | "pkcs8-der";
+  keyId?: string;
+};
 
 export type UpdateHeaderResolverContext = {
   artifactId?: string | null;
@@ -100,18 +129,24 @@ export type UpdateHeaderResolverContext = {
 };
 
 export type UpdateAuthConfig =
-  | {
-    type: "bearer";
-    token: string;
-  }
-  | {
-    type: "headers";
-    headers: Record<string, string>;
-  }
-  | {
-    type: "callback";
-    getHeaders: (context: UpdateHeaderResolverContext) => Promise<Record<string, string> | null | undefined> | Record<string, string> | null | undefined;
-  };
+| {
+  type: "bearer";
+  token: string;
+}
+| {
+  type: "headers";
+  headers: Record<string, string>;
+}
+| {
+  type: "callback";
+  getHeaders: (
+    context: UpdateHeaderResolverContext,
+  ) =>
+  |Promise<Record<string, string>|null|undefined>
+  |Record<string, string>
+  |null
+  |undefined;
+};
 
 export type UpdateManifestSource = {
   url: string;
@@ -123,7 +158,10 @@ export type UpdateDownloadSource = {
   auth?: UpdateAuthConfig | null;
 };
 
-export type UpdateFetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
+export type UpdateFetch = (
+  input: string | URL | Request,
+  init?: RequestInit,
+) => Promise<Response>;
 
 export type UpdateActivationTarget = {
   livePath: string;
@@ -137,5 +175,7 @@ export type UpdateRestartHookContext = {
   targetPath: string;
 };
 
-export type UpdateRestartHook = (context: UpdateRestartHookContext) => void | Promise<void>;
+export type UpdateRestartHook = (
+  context: UpdateRestartHookContext,
+) => void |Promise<void>;
 export type UpdateVersionReader = () => string | Promise<string>;

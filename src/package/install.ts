@@ -5,21 +5,21 @@ import type {
   UpdateLifecycleHandler,
   UpdatePackageInstallResult,
   UpdatePackageInstaller,
-} from "#types";
+} from "#kn5mninc2td8";
 
 export async function executePackageInstall(input: {
-  artifact: UpdateArtifact;
-  filePath: string;
-  installer?: UpdatePackageInstaller;
-  lifecycleHandler?: UpdateLifecycleHandler;
-  workingDirectory: string;
+    artifact: UpdateArtifact;
+    filePath: string;
+    installer?: UpdatePackageInstaller;
+    lifecycleHandler?: UpdateLifecycleHandler;
+    workingDirectory: string;
 }): Promise<UpdatePackageInstallResult> {
   const installer = input.installer ?? createHostPackageInstaller();
   return installer.install({
-    artifact: input.artifact,
-    filePath: input.filePath,
-    lifecycle: input.lifecycleHandler,
-    workingDirectory: input.workingDirectory,
+      artifact: input.artifact,
+      filePath: input.filePath,
+      lifecycle: input.lifecycleHandler,
+      workingDirectory: input.workingDirectory,
   });
 }
 
@@ -61,25 +61,25 @@ function resolvePackageCommand(artifact: UpdateArtifact, filePath: string) {
 
 async function runPackageCommand(command: string, args: string[], workingDirectory: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(command, args, {
-      cwd: workingDirectory,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+      const child = spawn(command, args, {
+          cwd: workingDirectory,
+          stdio: ["ignore", "pipe", "pipe"],
+      });
 
-    let stderr = "";
+      let stderr = "";
 
-    child.stderr.on("data", (chunk) => {
-      stderr += String(chunk);
-    });
+      child.stderr.on("data", (chunk) => {
+          stderr += String(chunk);
+      });
 
-    child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code === 0) {
-        resolve();
-        return;
-      }
+      child.on("error", reject);
+      child.on("exit", (code) => {
+          if (code === 0) {
+            resolve();
+            return;
+          }
 
-      reject(new Error(`${command} exited with code ${code}${stderr ? `: ${stderr.trim()}` : ""}`));
-    });
+          reject(new Error(`${command} exited with code ${code}${stderr ? `: ${stderr.trim()}` : ""}`));
+      });
   });
 }

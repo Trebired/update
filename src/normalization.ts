@@ -1,14 +1,14 @@
-import type { UpdateChecksum, UpdateSignature } from "#types";
+import type { UpdateChecksum, UpdateSignature } from "./types";
 
 export function normalizeSignature(value: Record<string, unknown>): UpdateSignature {
   return {
-    type: String(value.type ?? "ed25519") as "ed25519",
+    type: String(value.type ??"ed25519") as "ed25519",
     value: String(value.value),
   };
 }
 
 export function normalizeChecksum(input: Record<string, unknown>): UpdateChecksum {
-  if ("type" in input) {
+  if ("type"in input) {
     return {
       type: String(input.type) as "sha256",
       value: String(input.value),
@@ -37,7 +37,7 @@ export function readRecord(input: Record<string, unknown>, keys: readonly string
   return value as Record<string, unknown>;
 }
 
-export function readOptionalRecord(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean): Record<string, unknown> | null {
+export function readOptionalRecord(input: Record<string, unknown>, keys: readonly string[], allowAliases: boolean): Record<string, unknown>|null {
   const value = readUnknown(input, keys, allowAliases, true);
   if (value == null) {
     return null;

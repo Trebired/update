@@ -3,20 +3,20 @@ import type {
   UpdateManifest,
   UpdateStateSnapshot,
   UpdateSubject,
-} from "#types";
+} from "#kn5mninc2td8";
 
 export function createSnapshot(input: {
-  artifact?: UpdateCheckResult["artifact"];
-  download?: UpdateStateSnapshot["download"];
-  error?: UpdateStateSnapshot["error"];
-  flow: UpdateStateSnapshot["flow"];
-  manifest?: UpdateManifest;
-  operationId: string;
-  phase: UpdateStateSnapshot["phase"];
-  releaseVersion?: string;
-  restartPending?: boolean;
-  rollback?: UpdateStateSnapshot["rollback"];
-  subject?: UpdateSubject;
+    artifact?: UpdateCheckResult["artifact"];
+    download?: UpdateStateSnapshot["download"];
+    error?: UpdateStateSnapshot["error"];
+    flow: UpdateStateSnapshot["flow"];
+    manifest?: UpdateManifest;
+    operationId: string;
+    phase: UpdateStateSnapshot["phase"];
+    releaseVersion?: string;
+    restartPending?: boolean;
+    rollback?: UpdateStateSnapshot["rollback"];
+    subject?: UpdateSubject;
 }): UpdateStateSnapshot {
   return {
     artifact: input.artifact,

@@ -1,48 +1,48 @@
 import { randomUUID } from "node:crypto";
 
-import { applyUpdate, checkForUpdate } from "#runtime";
+import { applyUpdate, checkForUpdate } from "#u5znmf1spkff";
 import type {
   AppliedUpdateResult,
   UpdateCheckResult,
   UpdateScheduler,
   UpdateSchedulerConfig,
   UpdateSchedulerState,
-} from "#types";
+} from "./types";
 
 export function createUpdateScheduler(input: UpdateSchedulerConfig): UpdateScheduler {
   let timer: Timer | null = null;
   let running = false;
-  let activeRun: Promise<AppliedUpdateResult | UpdateCheckResult> | null = null;
+  let activeRun: Promise<AppliedUpdateResult|UpdateCheckResult>|null = null;
   const state: UpdateSchedulerState = {
     running: false,
   };
 
   const scheduleNext = () => queueNextRun(input.intervalMs, state, () => {
-    timer = setTimeout(() => {
-      void runInLoop(input, state, runOnce).finally(scheduleNext);
-    }, input.intervalMs);
-    if (input.unrefTimer !== false && typeof timer.unref === "function") {
-      timer.unref();
-    }
+      timer = setTimeout(() => {
+          void runInLoop(input, state, runOnce).finally(scheduleNext);
+        }, input.intervalMs);
+      if (input.unrefTimer !== false && typeof timer.unref === "function") {
+        timer.unref();
+      }
   });
   const runOnce = () => executeScheduledRun(input, state, {
-    get activeRun() {
-      return activeRun;
-    },
-    get running() {
-      return running;
-    },
-    setActiveRun(value) {
-      activeRun = value;
-    },
-    setRunning(value) {
-      running = value;
-    },
+      get activeRun() {
+        return activeRun;
+      },
+      get running() {
+        return running;
+      },
+      setActiveRun(value) {
+        activeRun = value;
+      },
+      setRunning(value) {
+        running = value;
+      },
   });
 
   return createSchedulerApi(input, state, runOnce, scheduleNext, () => timer, (value) => {
-    timer = value;
-  }, () => running);
+      timer = value;
+    }, () => running);
 }
 
 function createScheduledRun(input: UpdateSchedulerConfig) {
@@ -53,8 +53,8 @@ function createScheduledRun(input: UpdateSchedulerConfig) {
   };
 
   return (input.mode ?? "check") === "apply"
-    ? applyUpdate(runtimeInput)
-    : checkForUpdate(runtimeInput);
+  ? applyUpdate(runtimeInput)
+  : checkForUpdate(runtimeInput);
 }
 
 function queueNextRun(intervalMs: number, state: UpdateSchedulerState, schedule: () => void) {
@@ -68,7 +68,7 @@ function queueNextRun(intervalMs: number, state: UpdateSchedulerState, schedule:
 function createSchedulerApi(
   input: UpdateSchedulerConfig,
   state: UpdateSchedulerState,
-  runOnce: () => Promise<AppliedUpdateResult | UpdateCheckResult>,
+  runOnce: () => Promise<AppliedUpdateResult|UpdateCheckResult>,
   scheduleNext: () => void,
   readTimer: () => Timer | null,
   writeTimer: (value: Timer | null) => void,
@@ -108,7 +108,7 @@ function createSchedulerApi(
 async function runInLoop(
   input: UpdateSchedulerConfig,
   state: UpdateSchedulerState,
-  runOnce: () => Promise<AppliedUpdateResult | UpdateCheckResult>,
+  runOnce: () => Promise<AppliedUpdateResult|UpdateCheckResult>,
 ): Promise<void> {
   try {
     await runOnce();
@@ -117,9 +117,9 @@ async function runInLoop(
     const normalized = error instanceof Error ? error : new Error(String(error));
     state.lastError = normalized;
     await input.onError?.(normalized, {
-      state: {
-        ...state,
-      },
+        state: {
+          ...state,
+        },
     });
   }
 }
@@ -128,9 +128,9 @@ async function executeScheduledRun(
   input: UpdateSchedulerConfig,
   state: UpdateSchedulerState,
   control: {
-    activeRun: Promise<AppliedUpdateResult | UpdateCheckResult> | null;
+    activeRun: Promise<AppliedUpdateResult|UpdateCheckResult>|null;
     running: boolean;
-    setActiveRun(value: Promise<AppliedUpdateResult | UpdateCheckResult> | null): void;
+    setActiveRun(value: Promise<AppliedUpdateResult|UpdateCheckResult>|null): void;
     setRunning(value: boolean): void;
   },
 ) {

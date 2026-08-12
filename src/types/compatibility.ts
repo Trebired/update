@@ -28,18 +28,18 @@ export type CompatibilitySet = {
 };
 
 export type CompatibilitySetFieldAliases = {
-  compatibilitySet?: Partial<Record<"combinations" | "recordedAt" | "signature", string[]>>;
-  combination?: Partial<Record<"versions" | "resources", string[]>>;
-  resource?: Partial<Record<"version" | "fileName" | "checksum", string[]>>;
+  compatibilitySet?: Partial<Record<"combinations"|"recordedAt"|"signature", string[]>>;
+  combination?: Partial<Record<"versions"|"resources", string[]>>;
+  resource?: Partial<Record<"version"|"fileName"|"checksum", string[]>>;
 };
 
-export type GenericManifestNormalizationOptions = UpdateNormalizationOptions & {
-  fieldAliases?: UpdateNormalizationOptions["fieldAliases"] & CompatibilitySetFieldAliases & ResourceManifestFieldAliases;
+export type GenericManifestNormalizationOptions = UpdateNormalizationOptions& {
+  fieldAliases?: UpdateNormalizationOptions["fieldAliases"]&CompatibilitySetFieldAliases&ResourceManifestFieldAliases;
 };
 
 export type FetchJsonManifestOptions<T> = {
   auth?: UpdateAuthConfig | null;
-  authHeader?: Record<string, string> | null;
+  authHeader?: Record<string, string>|null;
   fetchImpl?: UpdateFetch;
   headers?: Record<string, string>;
   normalization?: (raw: unknown) => T;
@@ -51,7 +51,7 @@ export type FetchedJsonManifest<T> = {
   responseHeaders: Headers;
 };
 
-export type CounterpartExpectationPaths = Record<string, string | string[]>;
+export type CounterpartExpectationPaths = Record<string, string|string[]>;
 
 export type ReadCounterpartExpectationsOptions = {
   fieldPaths: CounterpartExpectationPaths;
@@ -67,7 +67,7 @@ export type EvaluateCounterpartInput = {
   selfEntity: string;
   selfVersion: string;
   expected: Record<string, string>;
-  reported: Record<string, string | null | undefined>;
+  reported: Record<string, string|null|undefined>;
   treatUnknownAsCompatible?: boolean;
 };
 
@@ -93,8 +93,8 @@ export type SubjectClassification = {
 };
 
 export type ClassifyFleetCriteria = {
-  target?: Record<string, string | null | undefined>;
-  expected?: Record<string, string | null | undefined>;
+  target?: Record<string, string|null|undefined>;
+  expected?: Record<string, string|null|undefined>;
 };
 
 export type ClassifiedFleetSubject = {
@@ -129,13 +129,13 @@ export type ResourceManifest = {
 };
 
 export type ResourceManifestFieldAliases = {
-  resourceManifest?: Partial<Record<"entries" | "recordedAt" | "signature", string[]>>;
-  resourceEntry?: Partial<Record<"key" | "combination" | "resource" | "version" | "fileName" | "url" | "checksum", string[]>>;
+  resourceManifest?: Partial<Record<"entries"|"recordedAt"|"signature", string[]>>;
+  resourceEntry?: Partial<Record<"key"|"combination"|"resource"|"version"|"fileName"|"url"|"checksum", string[]>>;
 };
 
 export type FetchResourceManifestOptions = {
   auth?: UpdateAuthConfig | null;
-  authHeader?: Record<string, string> | null;
+  authHeader?: Record<string, string>|null;
   fetchImpl?: UpdateFetch;
   normalization?: GenericManifestNormalizationOptions;
   verificationKeys?: UpdateVerificationKeyInput[];
@@ -163,10 +163,10 @@ export type InstallResourceBundleInput = {
   key: string;
   fetchImpl?: UpdateFetch;
   extract?: (input: {
-    archivePath: string;
-    stagingDir: string;
-  }) => Promise<void> | void;
-  validate?: (stagingDir: string) => Promise<void> | void;
+      archivePath: string;
+      stagingDir: string;
+  }) => Promise<void>|void;
+  validate?: (stagingDir: string) => Promise<void>|void;
   meta?: Record<string, unknown>;
 };
 
@@ -180,7 +180,7 @@ export type SchedulerErrorHandlerContext = {
 };
 
 export type UpdateSchedulerLoopOptions = {
-  onError?: (error: Error, context: SchedulerErrorHandlerContext) => void | Promise<void>;
+  onError?: (error: Error, context: SchedulerErrorHandlerContext) => void |Promise<void>;
   unrefTimer?: boolean;
 };
 

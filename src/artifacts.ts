@@ -16,7 +16,7 @@ import type {
   UpdateManifest,
   UpdateRuntimeTarget,
   UpdateSubject,
-} from "#types";
+} from "./types";
 
 export function normalizeArtifact(input: Record<string, unknown>, fallbackEntity: string, allowAliases = true): UpdateArtifact {
   const installStrategy = readString(input, ["installStrategy", "strategy", "kind"], allowAliases);
@@ -42,18 +42,18 @@ export function normalizeArtifact(input: Record<string, unknown>, fallbackEntity
 
 export function selectArtifact(manifest: UpdateManifest, runtime: UpdateRuntimeTarget): UpdateArtifact {
   return selectArtifactForSubject(manifest, runtime, {
-    channel: runtime.channel,
-    legacyChannelMatch: true,
+      channel: runtime.channel,
+      legacyChannelMatch: true,
   });
 }
 
 export function selectArtifactForSubject(manifest: UpdateManifest, subject: UpdateSubject, options: SelectArtifactOptions = {}): UpdateArtifact {
   const matches = manifest.artifacts
-    .filter((artifact) => artifact.entity === subject.entity)
-    .filter((artifact) => !options.legacyChannelMatch || !artifact.channel || artifact.channel === (options.channel ?? null))
-    .filter((artifact) => artifact.os === subject.os)
-    .filter((artifact) => artifact.arch === subject.arch)
-    .filter((artifact) => artifact.installStrategy === subject.installStrategy);
+  .filter((artifact) => artifact.entity === subject.entity)
+  .filter((artifact) => !options.legacyChannelMatch || !artifact.channel || artifact.channel === (options.channel ?? null))
+  .filter((artifact) => artifact.os === subject.os)
+  .filter((artifact) => artifact.arch === subject.arch)
+  .filter((artifact) => artifact.installStrategy === subject.installStrategy);
 
   if (matches.length === 0) {
     throw new Error(`No artifact matched entity ${subject.entity} for ${subject.os}/${subject.arch}/${subject.installStrategy}.`);
@@ -81,14 +81,13 @@ export function inferArtifactFileName(artifact: UpdateArtifact): string {
     }
   }
   catch {
-    // ignore and fall back
   }
 
   const extension = artifact.archiveFormat === "tar.gz"
-    ? ".tar.gz"
-    : artifact.archiveFormat === "zip"
-      ? ".zip"
-      : ".bin";
+  ? ".tar.gz"
+  : artifact.archiveFormat === "zip"
+  ? ".zip"
+  : ".bin";
 
   return sanitizeFileName(`${artifact.entity}-${artifact.os}-${artifact.arch}-${artifact.id}${extension}`);
 }

@@ -7,17 +7,17 @@ import type {
   NormalizedUpdateLogger,
   UpdateLogger,
   UpdateLoggerAdapter,
-} from "#types";
+} from "./types";
 
 function resolveLogger(
   logger?: UpdateLogger,
   adapter?: UpdateLoggerAdapter,
 ): NormalizedUpdateLogger {
   return resolveSharedLogger({
-    adapter,
-    fallback: "console",
-    logger,
-    source: PACKAGE_NAME,
+      adapter,
+      fallback: "console",
+      logger,
+      source: PACKAGE_NAME,
   }) as NormalizedUpdateLogger;
 }
 

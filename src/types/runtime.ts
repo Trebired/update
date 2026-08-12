@@ -25,9 +25,9 @@ import type {
 import type { UpdateLogger, UpdateLoggerAdapter, UpdateStatusHandler } from "./logging.js";
 import type { UpdateSchedulerLoopOptions } from "./compatibility.js";
 
-export type UpdateClientConfig = UpdateRuntimeTarget & {
+export type UpdateClientConfig = UpdateRuntimeTarget& {
   manifestUrl: string;
-  manifestSources?: Array<string | UpdateManifestSource>;
+  manifestSources?: Array<string|UpdateManifestSource>;
   workingDirectory: string;
   verificationKeys: UpdateVerificationKeyInput[];
   auth?: UpdateAuthConfig | null;
@@ -55,7 +55,7 @@ export type FetchedManifest = {
   responseHeaders: Headers;
 };
 
-export type FetchedManifestSource = FetchedManifest & {
+export type FetchedManifestSource = FetchedManifest& {
   sourceIndex: number;
   sourceUrl: string;
 };
@@ -64,7 +64,7 @@ export type FetchManifestFromSourcesInput = {
   fetchImpl?: UpdateFetch;
   normalization?: UpdateNormalizationOptions;
   verificationKeys?: UpdateVerificationKeyInput[];
-  sources: Array<string | UpdateManifestSource>;
+  sources: Array<string|UpdateManifestSource>;
 };
 
 export type DownloadArtifactInput = {
@@ -78,7 +78,7 @@ export type DownloadArtifactInput = {
   workingDirectory: string;
 };
 
-export type DownloadArtifactResult = UpdateDownloadCheckpoint & {
+export type DownloadArtifactResult = UpdateDownloadCheckpoint& {
   artifact: UpdateArtifact;
   downloadedAt: string;
   sha256: string;
@@ -158,7 +158,7 @@ export type EvaluateUpdateCandidateResult = {
   assertAllowed(): void;
 };
 
-export type UpdateCheckInput = UpdateClientConfig & {
+export type UpdateCheckInput = UpdateClientConfig& {
   lockKey?: string;
   manifest?: UpdateManifest;
   operationId?: string;
@@ -177,7 +177,7 @@ export type UpdateCheckResult = {
   subject: import("./core.js").UpdateSubject;
 };
 
-export type PrepareUpdateInput = UpdateClientConfig & {
+export type PrepareUpdateInput = UpdateClientConfig& {
   artifact?: UpdateArtifact;
   check?: UpdateCheckResult;
   lockKey?: string;
@@ -202,7 +202,7 @@ export type PreparedUpdate = {
   verification: VerifyDownloadedArtifactResult;
 };
 
-export type ApplyPreparedUpdateInput = UpdateClientConfig & {
+export type ApplyPreparedUpdateInput = UpdateClientConfig& {
   lockKey?: string;
   operationId?: string;
   prepared: PreparedUpdate;
@@ -224,14 +224,14 @@ export type AppliedUpdateResult = {
   verification: VerifyDownloadedArtifactResult;
 };
 
-export type ApplyUpdateInput = UpdateClientConfig & {
+export type ApplyUpdateInput = UpdateClientConfig& {
   lockKey?: string;
   manifest?: UpdateManifest;
   operationId?: string;
   subject?: import("./core.js").UpdateSubject;
 };
 
-export type ResumeUpdateInput = UpdateClientConfig & {
+export type ResumeUpdateInput = UpdateClientConfig& {
   lockKey?: string;
   operationId: string;
 };
@@ -246,18 +246,18 @@ export type UpdateSchedulerState = {
 
 export type UpdateSchedulerMode = "apply" | "check";
 
-export type UpdateSchedulerConfig = UpdateClientConfig & {
+export type UpdateSchedulerConfig = UpdateClientConfig& {
   intervalMs: number;
   lockKey?: string;
   mode?: UpdateSchedulerMode;
   operationIdFactory?: () => string;
-} & UpdateSchedulerLoopOptions;
+} &UpdateSchedulerLoopOptions;
 
 export type UpdateScheduler = {
   getState(): UpdateSchedulerState;
   start(): void;
   stop(): void;
-  triggerNow(): Promise<AppliedUpdateResult | UpdateCheckResult>;
+  triggerNow(): Promise<AppliedUpdateResult|UpdateCheckResult>;
 };
 
 export type UpdateFileStoreConfig = {

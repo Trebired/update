@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 
 export async function ensureDirectory(path: string): Promise<void> {
   await fs.mkdir(path, {
-    recursive: true,
+      recursive: true,
   });
 }
 
@@ -18,8 +18,8 @@ export async function pathExists(path: string): Promise<boolean> {
 
 export async function ensureRemoved(path: string): Promise<void> {
   await fs.rm(path, {
-    force: true,
-    recursive: true,
+      force: true,
+      recursive: true,
   });
 }
 

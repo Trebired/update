@@ -10,7 +10,7 @@ import type {
   UpdateLockStore,
   UpdateStateSnapshot,
   UpdateStateStore,
-} from "#types";
+} from "./types";
 
 export async function withUpdateLock<T>(
   input: {
@@ -68,9 +68,9 @@ export function createFileUpdateJournalStore(input: UpdateFileStoreConfig): Upda
       }
 
       return (await fs.readFile(filePath, "utf8"))
-        .split("\n")
-        .filter((line) => line.length > 0)
-        .map((line) => JSON.parse(line) as UpdateJournalEntry);
+      .split("\n")
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line) as UpdateJournalEntry);
     },
   };
 }

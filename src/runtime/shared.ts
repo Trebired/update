@@ -6,20 +6,20 @@ import type {
   UpdateManifest,
   UpdateStateSnapshot,
   UpdateSubject,
-} from "#types";
+} from "#kn5mninc2td8";
 
-export function resolveManifestSources(input: Pick<UpdateClientConfig, "auth" | "manifestSources" | "manifestUrl">) {
+export function resolveManifestSources(input: Pick<UpdateClientConfig, "auth"|"manifestSources"|"manifestUrl">) {
   if (input.manifestSources?.length) {
     return input.manifestSources;
   }
 
   return [{
-    auth: input.auth,
-    url: input.manifestUrl,
+      auth: input.auth,
+      url: input.manifestUrl,
   }];
 }
 
-export function resolveSubject(input: Pick<UpdateCheckInput, "arch" | "currentVersion" | "entity" | "installStrategy" | "os" | "subject">): UpdateSubject {
+export function resolveSubject(input: Pick<UpdateCheckInput, "arch"|"currentVersion"|"entity"|"installStrategy"|"os"|"subject">): UpdateSubject {
   return input.subject ?? {
     arch: input.arch,
     currentVersion: input.currentVersion,
@@ -51,7 +51,7 @@ export function toError(error: unknown): Error {
 
 export function toPackageSnapshotInput(input: PrepareUpdateInput, manifest: UpdateManifest, operationId: string, subject: UpdateSubject) {
   return {
-    flow: "apply" as const,
+    flow: "apply"as const,
     manifest,
     operationId,
     releaseVersion: manifest.releaseVersion,

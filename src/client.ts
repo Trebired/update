@@ -1,6 +1,6 @@
 import { fetchManifestFromSources } from "#manifest";
 import { planRollout, planSecondaryUpdate, verifySecondaryUpdateInstruction } from "#orchestrator";
-import { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate } from "#runtime";
+import { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate } from "#u5znmf1spkff";
 import { createUpdateScheduler } from "#scheduler";
 import type {
   ApplySecondaryUpdateInput,
@@ -11,43 +11,43 @@ import type {
   SelfUpdatePlan,
   UpdateClient,
   UpdateClientConfig,
-} from "#types";
+} from "./types";
 
 export function createUpdateClient(config: UpdateClientConfig): UpdateClient {
   return {
     applySecondaryUpdate: (input) => applySecondaryUpdate({
-      ...input,
-      mode: "secondary",
+        ...input,
+        mode: "secondary",
     }),
     applySelfUpdate: (input = {}) => applySelfUpdate({
-      ...config,
-      ...input,
+        ...config,
+        ...input,
     }),
     applyUpdate: (input = {}) => applyUpdate({
-      ...config,
-      ...input,
+        ...config,
+        ...input,
     }),
     checkForUpdate: (input = {}) => checkForUpdate({
-      ...config,
-      ...input,
+        ...config,
+        ...input,
     }),
     createUpdateScheduler: (input) => createUpdateScheduler({
-      ...config,
-      ...input,
+        ...config,
+        ...input,
     }),
     fetchManifest: () => fetchManifestForClient(config),
-    planRollout: async (input) => planRollout({
-      ...input,
-      verificationKeys: input.verificationKeys ?? config.verificationKeys,
+    planRollout: async(input) => planRollout({
+        ...input,
+        verificationKeys: input.verificationKeys ?? config.verificationKeys,
     }),
-    planSecondaryUpdate: async (input) => planSecondaryUpdate({
-      ...input,
-      runtime: input.runtime ?? config,
-      verificationKeys: input.verificationKeys ?? config.verificationKeys,
+    planSecondaryUpdate: async(input) => planSecondaryUpdate({
+        ...input,
+        runtime: input.runtime ?? config,
+        verificationKeys: input.verificationKeys ?? config.verificationKeys,
     }),
     planSelfUpdate: (input = {}) => planSelfUpdate({
-      ...config,
-      ...input,
+        ...config,
+        ...input,
     }),
   };
 }
@@ -96,14 +96,14 @@ export async function applySecondaryUpdate(input: ApplySecondaryUpdateInput): Pr
   const check = createSecondaryCheck(verified, currentVersion, manifest);
   const runtimeInput = createSecondaryRuntimeInput(input, verified, currentVersion, manifest, check.subject);
   const prepared = await prepareUpdate({
-    ...runtimeInput,
-    check,
+      ...runtimeInput,
+      check,
   });
   const result = await applyPreparedUpdate({
-    ...runtimeInput,
-    currentVersion: prepared.check.subject.currentVersion,
-    prepared,
-    target: input.target,
+      ...runtimeInput,
+      currentVersion: prepared.check.subject.currentVersion,
+      prepared,
+      target: input.target,
   });
 
   return {
@@ -118,13 +118,13 @@ export async function applySecondaryUpdate(input: ApplySecondaryUpdateInput): Pr
 
 async function fetchManifestForClient(config: UpdateClientConfig) {
   const result = await fetchManifestFromSources({
-    fetchImpl: config.fetchImpl,
-    normalization: config.normalization,
-    sources: config.manifestSources ?? [{
-      auth: config.auth,
-      url: config.manifestUrl,
-    }],
-    verificationKeys: config.verificationKeys,
+      fetchImpl: config.fetchImpl,
+      normalization: config.normalization,
+      sources: config.manifestSources ?? [{
+          auth: config.auth,
+          url: config.manifestUrl,
+      }],
+      verificationKeys: config.verificationKeys,
   });
 
   return {
@@ -135,11 +135,11 @@ async function fetchManifestForClient(config: UpdateClientConfig) {
 
 function verifyInputInstruction(input: ApplySecondaryUpdateInput) {
   return verifySecondaryUpdateInstruction({
-    expectedTargetEntity: input.targetEntity,
-    expectedTargetInstanceId: input.targetInstanceId,
-    instruction: input.instruction,
-    now: input.now,
-    verificationKeys: input.verificationKeys,
+      expectedTargetEntity: input.targetEntity,
+      expectedTargetInstanceId: input.targetInstanceId,
+      instruction: input.instruction,
+      now: input.now,
+      verificationKeys: input.verificationKeys,
   });
 }
 
@@ -181,10 +181,10 @@ function createSecondaryCheck(
     shouldUpdate: true as const,
     snapshot: {
       artifact: verified.instruction.artifact,
-      flow: "apply" as const,
+      flow: "apply"as const,
       manifest,
       operationId: verified.instruction.instructionId,
-      phase: "update-selected" as const,
+      phase: "update-selected"as const,
       releaseVersion: verified.instruction.releaseVersion,
       subject,
       updatedAt: verified.verifiedAt,
@@ -222,8 +222,8 @@ function createSecondaryRuntimeInput(
     readInstalledVersion: input.readInstalledVersion,
     restartController: input.restartController,
     restartHook: input.restartHook ? (context: Parameters<NonNullable<typeof input.restartHook>>[0]) => input.restartHook?.({
-      ...context,
-      mode: "secondary",
+        ...context,
+        mode: "secondary",
     }) : undefined,
     stateStore: input.stateStore,
     statusHandler: input.statusHandler,

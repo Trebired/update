@@ -4,7 +4,7 @@ import type {
   EvaluateCounterpartInput,
   EvaluateCounterpartResult,
   ReadCounterpartExpectationsOptions,
-} from "#types";
+} from "./types";
 
 export class CounterpartMismatchError extends Error {
   readonly selfEntity: string;
@@ -12,9 +12,9 @@ export class CounterpartMismatchError extends Error {
   readonly mismatches: EvaluateCounterpartResult["mismatches"];
 
   constructor(input: {
-    selfEntity: string;
-    selfVersion: string;
-    mismatches: EvaluateCounterpartResult["mismatches"];
+      selfEntity: string;
+      selfVersion: string;
+      mismatches: EvaluateCounterpartResult["mismatches"];
   }) {
     super(`Counterpart mismatch for entity ${input.selfEntity} at version ${input.selfVersion}.`);
     this.name = "CounterpartMismatchError";
@@ -24,35 +24,38 @@ export class CounterpartMismatchError extends Error {
   }
 }
 
-export function readCounterpartExpectations(config: unknown, options: CounterpartExpectationPaths | ReadCounterpartExpectationsOptions): Record<string, string> {
-  const paths = "fieldPaths" in options ? options.fieldPaths : options;
+export function readCounterpartExpectations(
+  config: unknown,
+  options: CounterpartExpectationPaths | ReadCounterpartExpectationsOptions
+): Record<string, string> {
+  const paths = "fieldPaths"in options ? options.fieldPaths : options;
   return Object.fromEntries(Object.entries(paths).flatMap(([entity, path]) => {
-    const value = readPath(config, Array.isArray(path) ? path : path.split("."));
-    return typeof value === "string" && value.length > 0
-      ? [[entity, value]]
-      : [];
+        const value = readPath(config, Array.isArray(path) ? path : path.split("."));
+        return typeof value === "string" && value.length > 0
+        ? [[entity, value]]
+        : [];
   }));
 }
 
 export function evaluateCounterpart(input: EvaluateCounterpartInput): EvaluateCounterpartResult {
   const treatUnknownAsCompatible = input.treatUnknownAsCompatible ?? true;
   const mismatches = Object.entries(input.expected).flatMap(([entity, expected]) => {
-    const reported = input.reported[entity];
-    const normalizedReported = typeof reported === "string" && reported.length > 0 ? reported : null;
+      const reported = input.reported[entity];
+      const normalizedReported = typeof reported === "string" && reported.length > 0 ? reported : null;
 
-    if (normalizedReported == null && treatUnknownAsCompatible) {
+      if (normalizedReported == null && treatUnknownAsCompatible) {
+        return [];
+      }
+
+      if (normalizedReported !== expected) {
+        return [{
+            entity,
+            expected,
+            reported: normalizedReported,
+        }];
+      }
+
       return [];
-    }
-
-    if (normalizedReported !== expected) {
-      return [{
-        entity,
-        expected,
-        reported: normalizedReported,
-      }];
-    }
-
-    return [];
   });
 
   return {
@@ -63,14 +66,14 @@ export function evaluateCounterpart(input: EvaluateCounterpartInput): EvaluateCo
 
 export function assertCounterpart(input: EvaluateCounterpartInput, options: AssertCounterpartOptions = {}): void {
   const result = evaluateCounterpart({
-    ...input,
-    treatUnknownAsCompatible: options.treatUnknownAsCompatible ?? input.treatUnknownAsCompatible,
+      ...input,
+      treatUnknownAsCompatible: options.treatUnknownAsCompatible ?? input.treatUnknownAsCompatible,
   });
   if (!result.compatible) {
     throw new CounterpartMismatchError({
-      selfEntity: input.selfEntity,
-      selfVersion: input.selfVersion,
-      mismatches: result.mismatches,
+        selfEntity: input.selfEntity,
+        selfVersion: input.selfVersion,
+        mismatches: result.mismatches,
     });
   }
 }

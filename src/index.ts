@@ -32,7 +32,7 @@ export {
   verifyUpdateInstruction,
 } from "#orchestrator";
 export { createHostPackageInstaller, executePackageInstall } from "#excrnrt4o22m";
-export { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate, resumeUpdate } from "#runtime";
+export { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate, resumeUpdate } from "#u5znmf1spkff";
 export { createUpdateScheduler } from "#scheduler";
 export {
   fetchResourceManifest,
@@ -55,4 +55,4 @@ export {
   verifyInstructionSignature,
   verifyManifestSignature,
 } from "#verify";
-export type * from "#types";
+export type *from "./types";

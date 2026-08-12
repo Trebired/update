@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { extractArchive } from "#archive";
 import { ensureDirectory } from "#fs";
 import { normalizeArchiveEntryPath, safeJoinWithin, sanitizeFileName } from "#paths";
-import type { StageArtifactInput, StageArtifactResult, UpdateArtifact } from "#types";
+import type { StageArtifactInput, StageArtifactResult, UpdateArtifact } from "./types";
 
 export async function stageArtifact(input: StageArtifactInput): Promise<StageArtifactResult> {
   const stageDirectory = path.join(input.workingDirectory, "stage", randomUUID());
@@ -41,9 +41,9 @@ async function stageArchiveArtifact(stageDirectory: string, input: StageArtifact
   await ensureDirectory(extractedRoot);
 
   const extractedFiles = await extractArchive({
-    destinationRoot: extractedRoot,
-    filePath: input.download.filePath,
-    format: input.artifact.archiveFormat,
+      destinationRoot: extractedRoot,
+      filePath: input.download.filePath,
+      format: input.artifact.archiveFormat,
   });
   const stagedBinaryPath = resolveStagedBinaryPath(input.artifact, extractedRoot, extractedFiles);
 

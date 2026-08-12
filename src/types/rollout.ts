@@ -30,15 +30,15 @@ type UpdateInstructionCommon = {
   signature: import("./core.js").UpdateSignature;
 };
 
-export type UpdateInstruction = UpdateInstructionCommon & ({
-  targetId: string;
-  targetInstanceId?: string;
-} | {
-  targetId?: string;
-  targetInstanceId: string;
+export type UpdateInstruction = UpdateInstructionCommon&({
+    targetId: string;
+    targetInstanceId?: string;
+  } | {
+    targetId?: string;
+    targetInstanceId: string;
 });
 
-export type SecondaryUpdateInstruction = UpdateInstructionCommon & {
+export type SecondaryUpdateInstruction = UpdateInstructionCommon& {
   targetId?: string;
   targetInstanceId: string;
 };
@@ -117,9 +117,9 @@ export type RolloutPlan = {
 
 export type RolloutInstructionDelivery = {
   deliver(batch: {
-    rolloutId: string;
-    instructions: UpdateInstruction[];
-  }): Promise<Array<{ instructionId: string; targetId: string; delivered: boolean; detail?: string }>>;
+      rolloutId: string;
+      instructions: UpdateInstruction[];
+  }): Promise<Array<{instructionId:string;targetId:string;delivered:boolean;detail?:string}>>;
 };
 
 export type RolloutAcknowledgement = {
@@ -132,8 +132,8 @@ export type RolloutAcknowledgement = {
 
 export type RolloutAcknowledgementSource = {
   collect(input: {
-    rolloutId: string;
-    instructionIds: string[];
+      rolloutId: string;
+      instructionIds: string[];
   }): Promise<RolloutAcknowledgement[]>;
 };
 
@@ -147,8 +147,8 @@ export type RolloutApplyResult = {
 
 export type RolloutResultSource = {
   collect(input: {
-    rolloutId: string;
-    instructionIds: string[];
+      rolloutId: string;
+      instructionIds: string[];
   }): Promise<RolloutApplyResult[]>;
 };
 
@@ -186,7 +186,7 @@ export type PlanRolloutInput = {
   auth?: UpdateAuthConfig | null;
   fetchImpl?: UpdateFetch;
   manifest?: UpdateManifest;
-  manifestSources?: Array<string | UpdateManifestSource>;
+  manifestSources?: Array<string|UpdateManifestSource>;
   manifestUrl?: string;
   normalization?: UpdateNormalizationOptions;
   rolloutId?: string;
@@ -224,7 +224,7 @@ export type CollectRolloutResultsInput = {
 
 export type SummarizeRolloutInput = {
   acknowledgements?: RolloutAcknowledgement[];
-  deliveries?: Array<{ instructionId: string; targetId: string; delivered: boolean; detail?: string }>;
+  deliveries?: Array<{instructionId:string;targetId:string;delivered:boolean;detail?:string}>;
   instructions?: UpdateInstruction[];
   plan: RolloutPlan;
   results?: RolloutApplyResult[];
@@ -238,7 +238,7 @@ export type PlanSecondaryUpdateInput = {
   fetchImpl?: UpdateFetch;
   instructionSigner?: UpdateSigningKeyInput;
   manifest?: UpdateManifest;
-  manifestSources?: Array<string | UpdateManifestSource>;
+  manifestSources?: Array<string|UpdateManifestSource>;
   manifestUrl?: string;
   normalization?: UpdateNormalizationOptions;
   now?: () => Date;

@@ -1,8 +1,10 @@
 {
   "#1z1fd8ththut": "./src/runtime/snapshots.ts",
   "#3qds0eu17fy6": "./src/logging.ts",
+  "#5cikqidcqaty": "./src/orchestrator/instructions.ts",
   "#6f1tfx6vspef": "./src/runtime/lifecycle.ts",
   "#6i4x6keei3cl": "./src/runtime/restart.ts",
+  "#6k3a0eh3piz7": "./src/resources/install.ts",
   "#6na3wpwptvxz": "./src/types/rollout.ts",
   "#6u3d2dmt8saj": "./src/types/runtime-compat.ts",
   "#7wkq5qrjwpds": "./src/runtime/apply.ts",
@@ -38,11 +40,10 @@
   "#paths": "./src/paths.ts",
   "#qkftxdsz0h6q": "./src/types/logging.ts",
   "#resources": "./src/resources.ts",
-  "#runtime": "./src/runtime.ts",
+  "#s42md5f7937q": "./src/orchestrator/rollout_summary.ts",
   "#scheduler": "./src/scheduler.ts",
   "#stage": "./src/stage.ts",
   "#stores": "./src/stores.ts",
-  "#types": "./src/types.ts",
   "#u5znmf1spkff": "./src/runtime/index.ts",
   "#verify": "./src/verify.ts",
   "#vvj5nfa3dikz": "./src/types/lifecycle.ts"

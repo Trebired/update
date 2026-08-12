@@ -9,7 +9,7 @@ import type {
   UpdateCheckResult,
   UpdateManifest,
   UpdateSubject,
-} from "#types";
+} from "#kn5mninc2td8";
 import { emitLifecycle } from "./lifecycle.js";
 import { createSnapshot } from "./snapshots.js";
 import { createFlowLockKey, resolveManifestSources, resolveSubject, saveSnapshot } from "./shared.js";
@@ -20,16 +20,16 @@ export async function checkForUpdate(input: UpdateCheckInput): Promise<UpdateChe
   const lockKey = input.lockKey ?? createFlowLockKey("check", subject);
 
   return withUpdateLock({
-    key: lockKey,
-    lockStore: input.lockStore,
-  }, async () => runCheckFlow(input, subject, operationId));
+      key: lockKey,
+      lockStore: input.lockStore,
+    }, async() => runCheckFlow(input, subject, operationId));
 }
 
 async function runCheckFlow(input: UpdateCheckInput, subject: UpdateSubject, operationId: string): Promise<UpdateCheckResult> {
   await emitLifecycle(input, {
-    operationId,
-    subject,
-    type: "check.started",
+      operationId,
+      subject,
+      type: "check.started",
   });
 
   const fetched = await resolveFetchedManifest(input);
@@ -45,16 +45,16 @@ async function resolveFetchedManifest(input: UpdateCheckInput) {
       manifest: input.manifest,
       sourceIndex: 0,
       sourceUrl: input.manifestSources?.[0] && typeof input.manifestSources[0] !== "string"
-        ? input.manifestSources[0].url
-        : input.manifestUrl,
+      ? input.manifestSources[0].url
+      : input.manifestUrl,
     };
   }
 
   return fetchManifestFromSources({
-    fetchImpl: input.fetchImpl,
-    normalization: input.normalization,
-    sources: resolveManifestSources(input),
-    verificationKeys: input.verificationKeys,
+      fetchImpl: input.fetchImpl,
+      normalization: input.normalization,
+      sources: resolveManifestSources(input),
+      verificationKeys: input.verificationKeys,
   });
 }
 
@@ -66,10 +66,10 @@ function assertManifestEntity(manifest: UpdateManifest, subject: UpdateSubject) 
 
 async function emitManifestFetched(input: UpdateCheckInput, operationId: string, manifest: UpdateManifest, sourceUrl: string) {
   await emitLifecycle(input, {
-    manifest,
-    operationId,
-    sourceUrl,
-    type: "manifest.fetched",
+      manifest,
+      operationId,
+      sourceUrl,
+      type: "manifest.fetched",
   });
 }
 
@@ -81,11 +81,11 @@ async function resolveCheckDecision(
 ): Promise<UpdateCheckResult> {
   const artifact = selectArtifactForSubject(fetched.manifest, subject);
   const evaluation = evaluateUpdateCandidate({
-    allowDowngrade: input.allowDowngrade,
-    allowSameVersion: input.allowSameVersion,
-    currentVersion: subject.currentVersion,
-    minimumSupportedVersion: fetched.manifest.minimumSupportedVersion,
-    releaseVersion: fetched.manifest.releaseVersion,
+      allowDowngrade: input.allowDowngrade,
+      allowSameVersion: input.allowSameVersion,
+      currentVersion: subject.currentVersion,
+      minimumSupportedVersion: fetched.manifest.minimumSupportedVersion,
+      releaseVersion: fetched.manifest.releaseVersion,
   });
 
   if (evaluation.reason === "already-current" && !evaluation.shouldUpdate) {
@@ -106,20 +106,20 @@ async function finalizeNoUpdate(
   reason: string,
 ): Promise<UpdateCheckResult> {
   const snapshot = createSnapshot({
-    artifact: null,
-    flow: "check",
-    manifest,
-    operationId,
-    phase: "manifest-fetched",
-    releaseVersion: manifest.releaseVersion,
-    subject,
+      artifact: null,
+      flow: "check",
+      manifest,
+      operationId,
+      phase: "manifest-fetched",
+      releaseVersion: manifest.releaseVersion,
+      subject,
   });
   await saveSnapshot(input, snapshot);
   await emitLifecycle(input, {
-    manifest,
-    operationId,
-    reason,
-    type: "no.update",
+      manifest,
+      operationId,
+      reason,
+      type: "no.update",
   });
 
   return {
@@ -145,20 +145,20 @@ async function finalizeAvailableUpdate(
   sourceUrl: string,
 ): Promise<UpdateCheckResult> {
   const snapshot = createSnapshot({
-    artifact,
-    flow: "check",
-    manifest,
-    operationId,
-    phase: "update-selected",
-    releaseVersion: manifest.releaseVersion,
-    subject,
+      artifact,
+      flow: "check",
+      manifest,
+      operationId,
+      phase: "update-selected",
+      releaseVersion: manifest.releaseVersion,
+      subject,
   });
   await saveSnapshot(input, snapshot);
   await emitLifecycle(input, {
-    artifact: artifact!,
-    manifest,
-    operationId,
-    type: "update.available",
+      artifact: artifact!,
+      manifest,
+      operationId,
+      type: "update.available",
   });
 
   return {

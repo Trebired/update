@@ -10,7 +10,7 @@ import type {
   UpdateDownloadSource,
   UpdateAuthConfig,
   UpdateHeaderResolverContext,
-} from "#types";
+} from "./types";
 
 export async function downloadArtifact(input: DownloadArtifactInput): Promise<DownloadArtifactResult> {
   await ensureDirectory(getWorkingPath(input.workingDirectory, "downloads"));
@@ -32,7 +32,10 @@ export async function downloadArtifact(input: DownloadArtifactInput): Promise<Do
   throw lastError ?? new Error(`Artifact download failed for ${input.artifact.id}.`);
 }
 
-export async function resolveAuthHeaders(auth: UpdateAuthConfig | null | undefined, context: UpdateHeaderResolverContext): Promise<Record<string, string> | undefined> {
+export async function resolveAuthHeaders(
+  auth: UpdateAuthConfig | null | undefined,
+  context: UpdateHeaderResolverContext
+): Promise<Record<string, string>|undefined> {
   if (!auth) {
     return undefined;
   }
@@ -59,17 +62,21 @@ function buildDownloadSources(input: DownloadArtifactInput): UpdateDownloadSourc
       url: input.artifact.url,
     },
     ...mirrors.map((url) => ({
-      auth: input.auth,
-      url,
+          auth: input.auth,
+          url,
     })),
   ];
 }
 
-async function buildDownloadHeaders(source: UpdateDownloadSource, input: DownloadArtifactInput, resumeFrom: DownloadArtifactResult | DownloadArtifactInput["resumeFrom"]) {
+async function buildDownloadHeaders(
+  source: UpdateDownloadSource,
+  input: DownloadArtifactInput,
+  resumeFrom: DownloadArtifactResult | DownloadArtifactInput["resumeFrom"]
+) {
   const headers = await resolveAuthHeaders(source.auth ?? input.auth, {
-    artifactId: input.artifact.id,
-    purpose: "artifact",
-    url: source.url,
+      artifactId: input.artifact.id,
+      purpose: "artifact",
+      url: source.url,
   }) ?? {};
 
   if (resumeFrom) {
@@ -119,7 +126,7 @@ async function fetchSource(
   resumeFrom: DownloadArtifactResult | DownloadArtifactInput["resumeFrom"],
 ) {
   const response = await fetchImpl(source.url, {
-    headers: await buildDownloadHeaders(source, input, resumeFrom),
+      headers: await buildDownloadHeaders(source, input, resumeFrom),
   });
 
   if (!response.ok || !response.body) {

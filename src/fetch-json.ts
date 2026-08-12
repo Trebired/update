@@ -1,13 +1,13 @@
 import { stripSignatureField } from "#canonical";
 import { resolveAuthHeaders } from "#download";
 import { verifyDetachedSignature } from "#verify";
-import type { FetchedJsonManifest, FetchJsonManifestOptions, UpdateAuthConfig } from "#types";
+import type { FetchedJsonManifest, FetchJsonManifestOptions, UpdateAuthConfig } from "./types";
 
-export async function fetchJsonManifest<T = unknown>(url: string, options: FetchJsonManifestOptions<T> = {}): Promise<FetchedJsonManifest<T>> {
+export async function fetchJsonManifest<T=unknown>(url: string, options: FetchJsonManifestOptions<T> = {}): Promise<FetchedJsonManifest<T>> {
   const fetchImpl = options.fetchImpl ?? globalThis.fetch;
   const response = await fetchImpl(url, {
-    headers: await buildHeaders(url, options),
-    redirect: "follow",
+      headers: await buildHeaders(url, options),
+      redirect: "follow",
   });
 
   if (!response.ok) {
@@ -33,9 +33,9 @@ async function buildHeaders<T>(url: string, options: FetchJsonManifestOptions<T>
     : null);
   return {
     ...(await resolveAuthHeaders(auth, {
-      purpose: "manifest",
-      url,
-    }) ?? {}),
+          purpose: "manifest",
+          url,
+      }) ?? {}),
     ...(options.headers ?? {}),
   };
 }
@@ -52,11 +52,11 @@ function verifySignedObject(value: unknown, verificationKeys: NonNullable<FetchJ
   }
 
   verifyDetachedSignature({
-    payload: stripSignatureField(signed),
-    signature: {
-      type: String((signature as Record<string, unknown>).type ?? "ed25519") as "ed25519",
-      value: String((signature as Record<string, unknown>).value),
-    },
-    verificationKeys,
+      payload: stripSignatureField(signed),
+      signature: {
+        type: String((signature as Record<string, unknown>).type ??"ed25519") as "ed25519",
+        value: String((signature as Record<string, unknown>).value),
+      },
+      verificationKeys,
   });
 }

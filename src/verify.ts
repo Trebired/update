@@ -14,7 +14,7 @@ import type {
   UpdateVerificationKeyInput,
   VerifyDownloadedArtifactInput,
   VerifyDownloadedArtifactResult,
-} from "#types";
+} from "./types";
 
 const ED25519_SPKI_PREFIX = Buffer.from("302a300506032b6570032100", "hex");
 
@@ -44,21 +44,31 @@ export async function hashFileSha256(filePath: string): Promise<string> {
   return hash.digest("hex");
 }
 
-export function verifyManifestSignature(manifest: UpdateManifest, verificationKeys: UpdateVerificationKeyInput[]): void {
+function verifySignedUpdatePayload(
+  payload: { signature: UpdateSignature },
+  verificationKeys: UpdateVerificationKeyInput[],
+): void {
   verifyDetachedSignature({
-    payload: stripSignatureField(manifest),
-    signature: manifest.signature,
-    verificationKeys,
+      payload: stripSignatureField(payload),
+      signature: payload.signature,
+      verificationKeys,
   });
 }
 
-export function verifyInstructionSignature(instruction: UpdateInstruction, verificationKeys: UpdateVerificationKeyInput[]): void {
-  verifyDetachedSignature({
-    payload: stripSignatureField(instruction),
-    signature: instruction.signature,
-    verificationKeys,
-  });
-}
+const verifyManifestSignature: (
+  manifest: UpdateManifest,
+  verificationKeys: UpdateVerificationKeyInput[],
+) => void = verifySignedUpdatePayload;
+
+const verifyInstructionSignature: (
+  instruction: UpdateInstruction,
+  verificationKeys: UpdateVerificationKeyInput[],
+) => void = verifySignedUpdatePayload;
+
+export {
+  verifyInstructionSignature,
+  verifyManifestSignature,
+};
 
 export function createDetachedSignature(payload: unknown, signer: UpdateSigningKeyInput): UpdateSignature {
   const privateKey = toPrivateKey(signer);
@@ -70,9 +80,9 @@ export function createDetachedSignature(payload: unknown, signer: UpdateSigningK
 }
 
 export function verifyDetachedSignature(input: {
-  payload: unknown;
-  signature: UpdateSignature;
-  verificationKeys: UpdateVerificationKeyInput[];
+    payload: unknown;
+    signature: UpdateSignature;
+    verificationKeys: UpdateVerificationKeyInput[];
 }): void {
   if (input.signature.type !== "ed25519") {
     throw new Error(`Unsupported signature type: ${input.signature.type}`);
@@ -94,8 +104,8 @@ export function verifyDetachedSignature(input: {
 
 export function evaluateUpdateCandidate(input: EvaluateUpdateCandidateInput): EvaluateUpdateCandidateResult {
   const minimumComparison = input.minimumSupportedVersion
-    ? compareVersions(input.currentVersion, input.minimumSupportedVersion)
-    : 0;
+  ? compareVersions(input.currentVersion, input.minimumSupportedVersion)
+  : 0;
   const comparison = compareVersions(input.currentVersion, input.releaseVersion);
 
   return {
@@ -103,10 +113,10 @@ export function evaluateUpdateCandidate(input: EvaluateUpdateCandidateInput): Ev
     currentVersion: input.currentVersion,
     minimumSupportedVersion: input.minimumSupportedVersion,
     reason: comparison === 0
-      ? "already-current"
-      : comparison > 0 && !input.allowDowngrade
-        ? "downgrade-disallowed"
-        : undefined,
+    ? "already-current"
+    : comparison > 0 && !input.allowDowngrade
+    ? "downgrade-disallowed"
+    : undefined,
     releaseVersion: input.releaseVersion,
     shouldUpdate: comparison < 0 || (comparison === 0 && Boolean(input.allowSameVersion)) || (comparison > 0 && Boolean(input.allowDowngrade)),
     assertAllowed() {
@@ -153,34 +163,34 @@ function toPublicKey(input: UpdateVerificationKeyInput) {
 
   if (input instanceof Uint8Array || Buffer.isBuffer(input)) {
     return createPublicKey({
-      format: "der",
-      key: Buffer.concat([ED25519_SPKI_PREFIX, Buffer.from(input)]),
-      type: "spki",
+        format: "der",
+        key: Buffer.concat([ED25519_SPKI_PREFIX, Buffer.from(input)]),
+        type: "spki",
     });
   }
 
-  if ("type" in input && typeof input.type === "string") {
+  if ("type"in input && typeof input.type === "string") {
     return input;
   }
 
-  const keyInput = input as Exclude<UpdateVerificationKeyInput, string | Uint8Array | Buffer | ReturnType<typeof createPublicKey>>;
+  const keyInput = input as Exclude<UpdateVerificationKeyInput, string|Uint8Array|Buffer|ReturnType<typeof createPublicKey>>;
   const format = keyInput.format ?? "pem";
   return createKeyFromString(keyInput.key, format);
 }
 
 function toPrivateKey(input: UpdateSigningKeyInput) {
-  if (typeof input === "string" || input instanceof Uint8Array || Buffer.isBuffer(input) || ("type" in input && typeof input.type === "string")) {
+  if (typeof input === "string" || input instanceof Uint8Array || Buffer.isBuffer(input) || ("type"in input && typeof input.type === "string")) {
     return createPrivateKey(input as Parameters<typeof createPrivateKey>[0]);
   }
 
-  const keyInput = input as Exclude<UpdateSigningKeyInput, string | Uint8Array | Buffer | ReturnType<typeof createPrivateKey>>;
+  const keyInput = input as Exclude<UpdateSigningKeyInput, string|Uint8Array|Buffer|ReturnType<typeof createPrivateKey>>;
   const format = keyInput.format ?? "pem";
 
   if (format === "pkcs8-der") {
     return createPrivateKey({
-      format: "der",
-      key: Buffer.from(keyInput.key as Uint8Array),
-      type: "pkcs8",
+        format: "der",
+        key: Buffer.from(keyInput.key as Uint8Array),
+        type: "pkcs8",
     });
   }
 
@@ -195,9 +205,9 @@ function createKeyFromString(input: string | Uint8Array | Buffer | ReturnType<ty
   if (format === "raw" || format === "raw-base64") {
     const bytes = format === "raw-base64" ? Buffer.from(String(input), "base64") : Buffer.from(input as Uint8Array);
     return createPublicKey({
-      format: "der",
-      key: Buffer.concat([ED25519_SPKI_PREFIX, bytes]),
-      type: "spki",
+        format: "der",
+        key: Buffer.concat([ED25519_SPKI_PREFIX, bytes]),
+        type: "spki",
     });
   }
 

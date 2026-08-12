@@ -8,7 +8,7 @@ import type {
   SubjectClassification,
   SubjectClassificationStatus,
   UpdateRuntimeTarget,
-} from "#types";
+} from "./types";
 
 export function classifySubject(input: ClassifySubjectInput): SubjectClassification {
   const reported = normalizeOptionalVersion(input.reported);
@@ -32,22 +32,22 @@ export function classifySubject(input: ClassifySubjectInput): SubjectClassificat
 
 export function classifyFleet(subjects: UpdateRuntimeTarget[], criteria: ClassifyFleetCriteria): ClassifiedFleet {
   const all = subjects.map((subject) => {
-    const expected = criteria.expected?.[subject.entity] ?? null;
-    const target = criteria.target?.[subject.entity] ?? null;
-    const reported = normalizeOptionalVersion(subject.currentVersion);
-    const { status } = classifySubject({
-      expected,
-      reported,
-      target,
-    });
+      const expected = criteria.expected?.[subject.entity] ?? null;
+      const target = criteria.target?.[subject.entity] ?? null;
+      const reported = normalizeOptionalVersion(subject.currentVersion);
+      const { status } = classifySubject({
+          expected,
+          reported,
+          target,
+      });
 
-    return {
-      subject,
-      status,
-      reported,
-      target: normalizeOptionalVersion(target),
-      expected: normalizeOptionalVersion(expected),
-    };
+      return {
+        subject,
+        status,
+        reported,
+        target: normalizeOptionalVersion(target),
+        expected: normalizeOptionalVersion(expected),
+      };
   });
 
   return {
@@ -55,15 +55,15 @@ export function classifyFleet(subjects: UpdateRuntimeTarget[], criteria: Classif
     byStatus: groupByStatus(all),
     signature: stableJsonStringify(all
       .map((entry) => ({
-        arch: entry.subject.arch,
-        channel: entry.subject.channel ?? null,
-        entity: entry.subject.entity,
-        expected: entry.expected ?? null,
-        installStrategy: entry.subject.installStrategy,
-        os: entry.subject.os,
-        reported: entry.reported ?? null,
-        status: entry.status,
-        target: entry.target ?? null,
+            arch: entry.subject.arch,
+            channel: entry.subject.channel ?? null,
+            entity: entry.subject.entity,
+            expected: entry.expected ?? null,
+            installStrategy: entry.subject.installStrategy,
+            os: entry.subject.os,
+            reported: entry.reported ?? null,
+            status: entry.status,
+            target: entry.target ?? null,
       }))
       .sort((left, right) => stableJsonStringify(left).localeCompare(stableJsonStringify(right)))),
   };

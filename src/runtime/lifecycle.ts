@@ -6,20 +6,20 @@ import type {
   UpdateClientConfig,
   UpdateLifecycleEvent,
   UpdateStatusEvent,
-} from "#types";
+} from "#kn5mninc2td8";
 
 const UPDATE_LOG_GROUP = buildPackageLogGroup();
 
 type LifecycleInput = Pick<
-  UpdateClientConfig,
-  "journalStore" | "lifecycleHandler" | "logger" | "loggerAdapter" | "statusHandler"
+UpdateClientConfig,
+"journalStore" | "lifecycleHandler" | "logger" | "loggerAdapter" | "statusHandler"
 >;
 
 export async function emitLifecycle(input: LifecycleInput, event: UpdateLifecycleEvent): Promise<void> {
   const at = new Date().toISOString();
   await input.journalStore?.append({
-    ...event,
-    at,
+      ...event,
+      at,
   });
   await input.lifecycleHandler?.(event);
 
@@ -38,40 +38,40 @@ export async function emitLifecycle(input: LifecycleInput, event: UpdateLifecycl
 export function toStatusEvent(event: UpdateLifecycleEvent): UpdateStatusEvent {
   switch (event.type) {
     case "check.started":
-      return toCheckStartedStatusEvent(event);
+    return toCheckStartedStatusEvent(event);
     case "manifest.fetched":
-      return toManifestFetchedStatusEvent(event);
+    return toManifestFetchedStatusEvent(event);
     case "update.available":
-      return toUpdateAvailableStatusEvent(event);
+    return toUpdateAvailableStatusEvent(event);
     case "no.update":
-      return toNoUpdateStatusEvent(event);
+    return toNoUpdateStatusEvent(event);
     case "apply.started":
-      return toApplyStartedStatusEvent(event);
+    return toApplyStartedStatusEvent(event);
     case "stage.failed":
     case "activate.failed":
     case "rollback.failed":
     case "cleanup.failed":
     case "apply.failed":
-      return toFailureStatusEvent({
+    return toFailureStatusEvent({
         error: event.error,
         operationId: event.operationId,
         type: event.type,
-      });
+    });
     default:
-      return toDefaultStatusEvent(event);
+    return toDefaultStatusEvent(event);
   }
 }
 
 function logStatusEvent(input: LifecycleInput, statusEvent: UpdateStatusEvent) {
   const logger = resolveLogger(input.logger, input.loggerAdapter);
   const metadata = statusEvent.context
-    ? {
-      ...statusEvent.context,
-      result: statusEvent.result,
-    }
-    : {
-      result: statusEvent.result,
-    };
+  ? {
+    ...statusEvent.context,
+    result: statusEvent.result,
+  }
+  : {
+    result: statusEvent.result,
+  };
 
   if (statusEvent.level === "error") {
     logger.fail(UPDATE_LOG_GROUP, statusEvent.message, metadata);
@@ -86,79 +86,79 @@ function logStatusEvent(input: LifecycleInput, statusEvent: UpdateStatusEvent) {
   logger.info(UPDATE_LOG_GROUP, statusEvent.message, metadata);
 }
 
-function toCheckStartedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "check.started" }>): UpdateStatusEvent {
+function toCheckStartedStatusEvent(event: Extract<UpdateLifecycleEvent, {type:"check.started"}>): UpdateStatusEvent {
   return {
     code: event.type,
     context: { operationId: event.operationId },
     level: "info",
     message: "Update check started.",
     result: result.ok("update-check-started", {
-      data: {
-        operationId: event.operationId,
-      },
+        data: {
+          operationId: event.operationId,
+        },
     }),
   };
 }
 
-function toManifestFetchedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "manifest.fetched" }>): UpdateStatusEvent {
+function toManifestFetchedStatusEvent(event: Extract<UpdateLifecycleEvent, {type:"manifest.fetched"}>): UpdateStatusEvent {
   return {
     code: event.type,
     context: { operationId: event.operationId, sourceUrl: event.sourceUrl },
     level: "info",
     message: "Manifest fetched.",
     result: result.ok("update-manifest-fetched", {
-      data: {
-        operationId: event.operationId,
-        sourceUrl: event.sourceUrl,
-      },
+        data: {
+          operationId: event.operationId,
+          sourceUrl: event.sourceUrl,
+        },
     }),
   };
 }
 
-function toUpdateAvailableStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "update.available" }>): UpdateStatusEvent {
+function toUpdateAvailableStatusEvent(event: Extract<UpdateLifecycleEvent, {type:"update.available"}>): UpdateStatusEvent {
   return {
     code: event.type,
     context: { artifactId: event.artifact.id, operationId: event.operationId },
     level: "info",
     message: "Update available.",
     result: result.ok("update-available", {
-      data: {
-        artifactId: event.artifact.id,
-        operationId: event.operationId,
-      },
+        data: {
+          artifactId: event.artifact.id,
+          operationId: event.operationId,
+        },
     }),
   };
 }
 
-function toNoUpdateStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "no.update" }>): UpdateStatusEvent {
+function toNoUpdateStatusEvent(event: Extract<UpdateLifecycleEvent, {type:"no.update"}>): UpdateStatusEvent {
   return {
     code: event.type,
     context: { operationId: event.operationId, reason: event.reason },
     level: "info",
     message: "No update available.",
     result: result.noop("no-update", {
-      data: {
-        operationId: event.operationId,
-      },
-      details: {
-        message: "No update is available.",
-        reason: event.reason,
-      },
+        data: {
+          operationId: event.operationId,
+        },
+        details: {
+          message: "No update is available.",
+          reason: event.reason,
+        },
     }),
   };
 }
 
-function toApplyStartedStatusEvent(event: Extract<UpdateLifecycleEvent, { type: "apply.started" }>): UpdateStatusEvent {
+function toApplyStartedStatusEvent(event: Extract<UpdateLifecycleEvent, {type:"apply.started"}>): UpdateStatusEvent {
   return {
     code: event.type,
     context: { artifactId: event.artifact.id, operationId: event.operationId },
     level: "info",
     message: "Apply started.",
     result: result.ok("update-apply-started", {
-      data: {
-        artifactId: event.artifact.id,
-        operationId: event.operationId,
-      },
+        data: {
+          artifactId: event.artifact.id,
+          operationId: event.operationId,
+        },
     }),
   };
 }
@@ -176,13 +176,13 @@ function toFailureStatusEvent(
     level: "error",
     message: event.type,
     result: result.internal(event.type, {
-      data: {
-        operationId: event.operationId,
-      },
-      details: {
-        error: event.error?.message,
-        message: event.type,
-      },
+        data: {
+          operationId: event.operationId,
+        },
+        details: {
+          error: event.error?.message,
+          message: event.type,
+        },
     }),
   };
 }
@@ -194,9 +194,9 @@ function toDefaultStatusEvent(event: UpdateLifecycleEvent): UpdateStatusEvent {
     level: "info",
     message: event.type,
     result: result.ok(event.type, {
-      data: {
-        operationId: event.operationId,
-      },
+        data: {
+          operationId: event.operationId,
+        },
     }),
   };
 }

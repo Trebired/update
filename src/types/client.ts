@@ -5,7 +5,20 @@ import type {
   UpdateVerificationKeyInput,
   UpdateVersionReader,
 } from "./core.js";
-import { ActivateStagedArtifactResult, AppliedUpdateResult, ApplyUpdateInput, DownloadArtifactResult, FetchedManifest, StageArtifactResult, UpdateCheckInput, UpdateCheckResult, UpdateClientConfig, UpdateScheduler, UpdateSchedulerConfig, VerifyDownloadedArtifactResult } from "./runtime-compat.js";
+import {
+  ActivateStagedArtifactResult,
+  AppliedUpdateResult,
+  ApplyUpdateInput,
+  DownloadArtifactResult,
+  FetchedManifest,
+  StageArtifactResult,
+  UpdateCheckInput,
+  UpdateCheckResult,
+  UpdateClientConfig,
+  UpdateScheduler,
+  UpdateSchedulerConfig,
+  VerifyDownloadedArtifactResult,
+} from "./runtime-compat.js";
 import type {
   UpdateJournalStore,
   UpdateLifecycleHandler,
@@ -75,18 +88,34 @@ export type ApplySecondaryUpdateResult = {
 };
 
 export type UpdateClient = {
-  applySecondaryUpdate: (input: Omit<ApplySecondaryUpdateInput, "mode">) => Promise<ApplySecondaryUpdateResult>;
-  applySelfUpdate: (input?: Partial<PlanSelfUpdateInput>) => Promise<ApplySelfUpdateResult>;
-  applyUpdate: (input?: Partial<ApplyUpdateInput>) => Promise<AppliedUpdateResult>;
-  checkForUpdate: (input?: Partial<UpdateCheckInput>) => Promise<UpdateCheckResult>;
-  createUpdateScheduler: (input: Omit<UpdateSchedulerConfig, keyof UpdateClientConfig>) => UpdateScheduler;
+  applySecondaryUpdate: (
+    input: Omit<ApplySecondaryUpdateInput, "mode">,
+  ) => Promise<ApplySecondaryUpdateResult>;
+  applySelfUpdate: (
+    input?: Partial<PlanSelfUpdateInput>,
+  ) => Promise<ApplySelfUpdateResult>;
+  applyUpdate: (
+    input?: Partial<ApplyUpdateInput>,
+  ) => Promise<AppliedUpdateResult>;
+  checkForUpdate: (
+    input?: Partial<UpdateCheckInput>,
+  ) => Promise<UpdateCheckResult>;
+  createUpdateScheduler: (
+    input: Omit<UpdateSchedulerConfig, keyof UpdateClientConfig>,
+  ) => UpdateScheduler;
   fetchManifest: () => Promise<FetchedManifest>;
-  planRollout: (input: Omit<PlanRolloutInput, "verificationKeys"> & {
-    verificationKeys?: UpdateVerificationKeyInput[];
-  }) => Promise<RolloutPlan>;
-  planSecondaryUpdate: (input: Omit<PlanSecondaryUpdateInput, "runtime" | "verificationKeys"> & {
-    runtime?: UpdateRuntimeTarget;
-    verificationKeys?: UpdateVerificationKeyInput[];
-  }) => Promise<SecondaryUpdatePlan>;
-  planSelfUpdate: (input?: Partial<PlanSelfUpdateInput>) => Promise<SelfUpdatePlan>;
+  planRollout: (
+    input: Omit<PlanRolloutInput, "verificationKeys">& {
+      verificationKeys?: UpdateVerificationKeyInput[];
+    },
+  ) => Promise<RolloutPlan>;
+  planSecondaryUpdate: (
+    input: Omit<PlanSecondaryUpdateInput, "runtime"|"verificationKeys">& {
+      runtime?: UpdateRuntimeTarget;
+      verificationKeys?: UpdateVerificationKeyInput[];
+    },
+  ) => Promise<SecondaryUpdatePlan>;
+  planSelfUpdate: (
+    input?: Partial<PlanSelfUpdateInput>,
+  ) => Promise<SelfUpdatePlan>;
 };

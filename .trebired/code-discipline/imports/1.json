@@ -44,6 +44,7 @@
   "#scheduler": "./src/scheduler.ts",
   "#stage": "./src/stage.ts",
   "#stores": "./src/stores.ts",
+  "#tic4gdwiar35": "./.trebired/logger/config.ts",
   "#u5znmf1spkff": "./src/runtime/index.ts",
   "#verify": "./src/verify.ts",
   "#vvj5nfa3dikz": "./src/types/lifecycle.ts"

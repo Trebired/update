@@ -1,6 +1,6 @@
 {
   "name": "@trebired/update",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "Generic update runtime for distributed binaries and packages, with high-level flows, rollout orchestration primitives, persistence helpers, and safe activation.",
   "type": "module",
   "private": false,

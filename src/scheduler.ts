@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import { applyUpdate, checkForUpdate } from "#u5znmf1spkff";
+import { loadCachedConfigSync, mergeSchedulerOptions } from "./config/index.js";
 import type {
   AppliedUpdateResult,
   UpdateCheckResult,
@@ -10,6 +11,7 @@ import type {
 } from "./types";
 
 export function createUpdateScheduler(input: UpdateSchedulerConfig): UpdateScheduler {
+  const resolvedInput = mergeSchedulerOptions(loadCachedConfigSync().scheduler, input);
   let timer: Timer | null = null;
   let running = false;
   let activeRun: Promise<AppliedUpdateResult|UpdateCheckResult>|null = null;
@@ -17,15 +19,15 @@ export function createUpdateScheduler(input: UpdateSchedulerConfig): UpdateSched
     running: false,
   };
 
-  const scheduleNext = () => queueNextRun(input.intervalMs, state, () => {
+  const scheduleNext = () => queueNextRun(resolvedInput.intervalMs, state, () => {
       timer = setTimeout(() => {
-          void runInLoop(input, state, runOnce).finally(scheduleNext);
-        }, input.intervalMs);
-      if (input.unrefTimer !== false && typeof timer.unref === "function") {
+          void runInLoop(resolvedInput, state, runOnce).finally(scheduleNext);
+        }, resolvedInput.intervalMs);
+      if (resolvedInput.unrefTimer !== false && typeof timer.unref === "function") {
         timer.unref();
       }
   });
-  const runOnce = () => executeScheduledRun(input, state, {
+  const runOnce = () => executeScheduledRun(resolvedInput, state, {
       get activeRun() {
         return activeRun;
       },
@@ -40,7 +42,7 @@ export function createUpdateScheduler(input: UpdateSchedulerConfig): UpdateSched
       },
   });
 
-  return createSchedulerApi(input, state, runOnce, scheduleNext, () => timer, (value) => {
+  return createSchedulerApi(resolvedInput, state, runOnce, scheduleNext, () => timer, (value) => {
       timer = value;
     }, () => running);
 }

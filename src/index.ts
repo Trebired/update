@@ -1,4 +1,16 @@
 export { activateStagedArtifact, rollbackActivatedArtifact } from "#activate";
+export {
+  UPDATE_PROJECT_CONFIG_PATH,
+  defineConfig,
+  findConfig,
+  findConfigSync,
+  loadCachedConfigSync,
+  loadConfig,
+  loadConfigSync,
+  mergeClientOptions,
+  mergeSchedulerOptions,
+  normalizeConfig,
+} from "./config/index.js";
 export { inferArtifactFileName, normalizeArtifact, selectArtifact, selectArtifactForSubject } from "#artifacts";
 export { applySecondaryUpdate, applySelfUpdate, createUpdateClient, planSelfUpdate } from "#client";
 export { downloadArtifact } from "#download";
@@ -56,3 +68,12 @@ export {
   verifyManifestSignature,
 } from "#verify";
 export type *from "./types";
+export type {
+  LoadedUpdateConfig,
+  LoadUpdateConfigOptions,
+  NormalizedUpdateConfig,
+  UpdateClientConfigDefaults,
+  UpdateClientConfigurableInput,
+  UpdateConfig,
+  UpdateSchedulerConfigDefaults,
+} from "./config/index.js";

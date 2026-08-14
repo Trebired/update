@@ -4,9 +4,15 @@ All notable changes to `@trebired/update` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 1.1.0
+
+- Updated the shared Trebired config dependency to `@trebired/configs@^0.1.2`.
+- Added public `.trebired/update/config.ts` support through `@trebired/update/config`.
+- Update checks, clients, schedulers, and artifact selection now merge package config defaults before explicit caller options.
+
 ## 1.0.12
 
-- Adopted the external `@trebired/code-discipline-config` preset and updated Code Discipline tooling to `@trebired/code-discipline@^6.0.9`.
+- Adopted the external `@trebired/configs` preset and updated Code Discipline tooling to `@trebired/code-discipline@^6.0.9`.
 
 ## 1.0.11
 

@@ -2,6 +2,7 @@ import { fetchManifestFromSources } from "#manifest";
 import { planRollout, planSecondaryUpdate, verifySecondaryUpdateInstruction } from "#orchestrator";
 import { applyPreparedUpdate, applyUpdate, checkForUpdate, prepareUpdate } from "#u5znmf1spkff";
 import { createUpdateScheduler } from "#scheduler";
+import { loadCachedConfigSync, mergeClientOptions } from "./config/index.js";
 import type {
   ApplySecondaryUpdateInput,
   ApplySecondaryUpdateResult,
@@ -14,39 +15,40 @@ import type {
 } from "./types";
 
 export function createUpdateClient(config: UpdateClientConfig): UpdateClient {
+  const resolvedConfig = mergeClientOptions(loadCachedConfigSync().client, config);
   return {
     applySecondaryUpdate: (input) => applySecondaryUpdate({
         ...input,
         mode: "secondary",
     }),
     applySelfUpdate: (input = {}) => applySelfUpdate({
-        ...config,
+        ...resolvedConfig,
         ...input,
     }),
     applyUpdate: (input = {}) => applyUpdate({
-        ...config,
+        ...resolvedConfig,
         ...input,
     }),
     checkForUpdate: (input = {}) => checkForUpdate({
-        ...config,
+        ...resolvedConfig,
         ...input,
     }),
     createUpdateScheduler: (input) => createUpdateScheduler({
-        ...config,
+        ...resolvedConfig,
         ...input,
     }),
-    fetchManifest: () => fetchManifestForClient(config),
+    fetchManifest: () => fetchManifestForClient(resolvedConfig),
     planRollout: async(input) => planRollout({
         ...input,
         verificationKeys: input.verificationKeys ?? config.verificationKeys,
     }),
     planSecondaryUpdate: async(input) => planSecondaryUpdate({
         ...input,
-        runtime: input.runtime ?? config,
-        verificationKeys: input.verificationKeys ?? config.verificationKeys,
+        runtime: input.runtime ?? resolvedConfig,
+        verificationKeys: input.verificationKeys ?? resolvedConfig.verificationKeys,
     }),
     planSelfUpdate: (input = {}) => planSelfUpdate({
-        ...config,
+        ...resolvedConfig,
         ...input,
     }),
   };

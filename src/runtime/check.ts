@@ -4,7 +4,9 @@ import { selectArtifactForSubject } from "#artifacts";
 import { fetchManifestFromSources } from "#manifest";
 import { withUpdateLock } from "#stores";
 import { evaluateUpdateCandidate } from "#verify";
+import { loadCachedConfigSync, mergeClientOptions } from "#f4fe12k9fztu";
 import type {
+  SelectArtifactOptions,
   UpdateCheckInput,
   UpdateCheckResult,
   UpdateManifest,
@@ -15,17 +17,24 @@ import { createSnapshot } from "./snapshots.js";
 import { createFlowLockKey, resolveManifestSources, resolveSubject, saveSnapshot } from "./shared.js";
 
 export async function checkForUpdate(input: UpdateCheckInput): Promise<UpdateCheckResult> {
-  const subject = resolveSubject(input);
-  const operationId = input.operationId ?? randomUUID();
-  const lockKey = input.lockKey ?? createFlowLockKey("check", subject);
+  const packageConfig = loadCachedConfigSync();
+  const resolvedInput = mergeClientOptions(packageConfig.client, input);
+  const subject = resolveSubject(resolvedInput);
+  const operationId = resolvedInput.operationId ?? randomUUID();
+  const lockKey = resolvedInput.lockKey ?? createFlowLockKey("check", subject);
 
   return withUpdateLock({
       key: lockKey,
-      lockStore: input.lockStore,
-    }, async() => runCheckFlow(input, subject, operationId));
+      lockStore: resolvedInput.lockStore,
+    }, async() => runCheckFlow(resolvedInput, subject, operationId, packageConfig.selection));
 }
 
-async function runCheckFlow(input: UpdateCheckInput, subject: UpdateSubject, operationId: string): Promise<UpdateCheckResult> {
+async function runCheckFlow(
+  input: UpdateCheckInput,
+  subject: UpdateSubject,
+  operationId: string,
+  selection: SelectArtifactOptions,
+): Promise<UpdateCheckResult> {
   await emitLifecycle(input, {
       operationId,
       subject,
@@ -36,7 +45,7 @@ async function runCheckFlow(input: UpdateCheckInput, subject: UpdateSubject, ope
   assertManifestEntity(fetched.manifest, subject);
   await emitManifestFetched(input, operationId, fetched.manifest, fetched.sourceUrl);
 
-  return resolveCheckDecision(input, subject, operationId, fetched);
+  return resolveCheckDecision(input, subject, operationId, fetched, selection);
 }
 
 async function resolveFetchedManifest(input: UpdateCheckInput) {
@@ -78,8 +87,9 @@ async function resolveCheckDecision(
   subject: UpdateSubject,
   operationId: string,
   fetched: Awaited<ReturnType<typeof resolveFetchedManifest>>,
+  selection: SelectArtifactOptions,
 ): Promise<UpdateCheckResult> {
-  const artifact = selectArtifactForSubject(fetched.manifest, subject);
+  const artifact = selectArtifactForSubject(fetched.manifest, subject, resolveSelectionOptions(input, selection));
   const evaluation = evaluateUpdateCandidate({
       allowDowngrade: input.allowDowngrade,
       allowSameVersion: input.allowSameVersion,
@@ -94,6 +104,15 @@ async function resolveCheckDecision(
 
   evaluation.assertAllowed();
   return finalizeAvailableUpdate(input, artifact, fetched.manifest, operationId, subject, fetched.sourceIndex, fetched.sourceUrl);
+}
+
+function resolveSelectionOptions(input: UpdateCheckInput, selection: SelectArtifactOptions): SelectArtifactOptions {
+  const channel = input.channel ?? selection.channel;
+  return {
+    ...selection,
+    channel,
+    legacyChannelMatch: selection.legacyChannelMatch ?? channel !== undefined,
+  };
 }
 
 async function finalizeNoUpdate(

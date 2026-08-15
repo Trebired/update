@@ -17,12 +17,14 @@ Pick<UpdateSchedulerConfig, "intervalMs"|"lockKey"|"mode"|"unrefTimer">
 
 type UpdateConfig = {
   client?: UpdateClientConfigDefaults;
+  forVersion?: string;
   scheduler?: UpdateSchedulerConfigDefaults;
   selection?: SelectArtifactOptions;
 };
 
 type NormalizedUpdateConfig = {
   client: UpdateClientConfigDefaults;
+  forVersion: string;
   scheduler: UpdateSchedulerConfigDefaults;
   selection: SelectArtifactOptions;
 };

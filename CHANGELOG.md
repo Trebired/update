@@ -4,6 +4,11 @@ All notable changes to `@trebired/update` will be documented here.
 
 This project follows semantic versioning once published.
 
+## 1.1.2
+
+- Updated shared utilities to `@trebired/utils@^0.4.3`.
+- Replaced local config normalization and package metadata helpers with shared utilities.
+
 ## 1.1.0
 
 - Updated the shared Trebired config dependency to `@trebired/configs@^0.1.2`.

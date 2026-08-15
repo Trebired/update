@@ -6,15 +6,30 @@ import type {
   UpdateSchedulerConfigDefaults,
 } from "./types.js";
 import type { UpdateSchedulerConfig } from "#kn5mninc2td8";
+import { PACKAGE_VERSION } from "#ohc5bi40j86u";
+import {
+  isRecord,
+  toTrimmedString,
+} from "@trebired/utils";
+import { resolveForVersion } from "@trebired/utils";
+
+type NormalizeOptions = {
+  configPath?: string;
+  requireForVersion?: boolean;
+};
 
 function defineConfig<TConfig extends UpdateConfig>(config: TConfig): TConfig {
   return config;
 }
 
-function normalizeConfig(config: UpdateConfig = {}): NormalizedUpdateConfig {
+function normalizeConfig(
+  config: UpdateConfig = {},
+  options: NormalizeOptions = {},
+): NormalizedUpdateConfig {
   if (!isRecord(config)) throw new Error("update config must be an object");
   return {
     client: normalizeClient(config.client),
+    forVersion: normalizeForVersion(config, options),
     scheduler: normalizeScheduler(config.scheduler),
     selection: normalizeSelection(config.selection),
   };
@@ -89,12 +104,21 @@ function normalizePositiveNumber(value: unknown): number | undefined {
 }
 
 function normalizeString(value: unknown): string | undefined {
-  const normalized = typeof value === "string" ? value.trim() : "";
+  const normalized = toTrimmedString(value);
   return normalized || undefined;
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value && typeof value === "object" && !Array.isArray(value));
+function normalizeForVersion(
+  config: UpdateConfig,
+  options: NormalizeOptions,
+): string {
+  return resolveForVersion({
+      configPath: options.configPath,
+      forVersion: config.forVersion,
+      label: "update",
+      packageVersion: PACKAGE_VERSION,
+      requireForVersion: options.requireForVersion,
+  });
 }
 
 function pickDefined<TValue extends Record<string, unknown>>(input: TValue): Partial<TValue> {

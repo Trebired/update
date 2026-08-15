@@ -3,6 +3,7 @@ import fsPromises from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import { PACKAGE_VERSION } from "#ohc5bi40j86u";
 import type {
   LoadedUpdateConfig,
   LoadUpdateConfigOptions,
@@ -12,7 +13,10 @@ import type {
 import { defineConfig, normalizeConfig } from "./normalize.js";
 
 const UPDATE_PROJECT_CONFIG_PATH = ".trebired/update/config.ts";
-const EMPTY_CONFIG = Object.freeze(normalizeConfig({}));
+const EMPTY_CONFIG = Object.freeze(normalizeConfig(
+    { forVersion: PACKAGE_VERSION },
+    { requireForVersion: false },
+));
 
 let cachedConfigs = new Map<string, LoadedUpdateConfig>();
 
@@ -98,7 +102,7 @@ function missingConfig(): LoadedUpdateConfig {
 
 function loadedConfig(configPath: string, config: UpdateConfig): LoadedUpdateConfig {
   return {
-    config: normalizeConfig(config),
+    config: normalizeConfig(config, { configPath, requireForVersion: true }),
     configPath,
     dependencies: [configPath],
   };

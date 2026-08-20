@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.7
+
+- Updated the logger-adapter dependency so update package logging uses the current shared adapter release.
+
 ## 1.1.6
 
 - Removed dead `config.creator` from `package.json`.

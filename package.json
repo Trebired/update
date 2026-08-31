@@ -8,7 +8,7 @@
     }
   },
   "name": "@trebired/update",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Generic update runtime for distributed binaries and packages, with high-level flows, rollout orchestration primitives, persistence helpers, and safe activation.",
   "type": "module",
   "private": false,
@@ -48,7 +48,7 @@
   "dependencies": {
     "@package/logger-adapter": "npm:@trebired/logger-adapter@^0.4.17",
     "@package/result": "npm:@trebired/result@^1.1.6",
-    "@trebired/utils": "^0.6.0",
+    "@trebired/utils": "^0.8.0",
     "fflate": "^0.8.3",
     "semver": "^7.8.5",
     "tar-stream": "^3.2.0"

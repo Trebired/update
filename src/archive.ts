@@ -9,6 +9,8 @@ import { normalizeArchiveEntryPath, safeJoinWithin } from "#paths";
 
 export type ArchiveFormat = "tar.gz" | "zip";
 
+type TarEntryStream = AsyncIterable<unknown> & { resume: () => unknown };
+
 export async function extractArchive(input: {
     filePath: string;
     destinationRoot: string;
@@ -82,7 +84,7 @@ async function extractTarGz(filePath: string, destinationRoot: string): Promise<
   });
 }
 
-async function handleTarEntry(destinationRoot: string, name: string, type: string, mode: number, stream: NodeJS.ReadableStream): Promise<void> {
+async function handleTarEntry(destinationRoot: string, name: string, type: string, mode: number, stream: TarEntryStream): Promise<void> {
   const entryPath = normalizeArchiveEntryPath(name);
   const targetPath = safeJoinWithin(destinationRoot, entryPath);
 
@@ -101,7 +103,7 @@ async function handleTarEntry(destinationRoot: string, name: string, type: strin
   const chunks: Buffer[] = [];
 
   for await (const chunk of stream) {
-    chunks.push(Buffer.from(chunk));
+    chunks.push(Buffer.from(chunk as Uint8Array));
   }
 
   await fs.writeFile(targetPath, Buffer.concat(chunks), {

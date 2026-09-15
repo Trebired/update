@@ -8,7 +8,7 @@
     }
   },
   "name": "@trebired/update",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Generic update runtime for distributed binaries and packages, with high-level flows, rollout orchestration primitives, persistence helpers, and safe activation.",
   "type": "module",
   "private": false,
@@ -46,7 +46,7 @@
     "verify:pack": "bun ./scripts/verify-pack.mjs"
   },
   "dependencies": {
-    "@package/logger-adapter": "npm:@trebired/logger-adapter@^0.4.19",
+    "@package/logger-adapter": "npm:@trebired/logger-adapter@^0.6.0",
     "@package/result": "npm:@trebired/result@^1.2.8",
     "@trebired/utils": "^0.9.3",
     "fflate": "^0.8.3",

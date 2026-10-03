@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "category": "package",
+  "subcategory": "runtime",
+  "status": "active",
+  "npm": "@trebired/update",
+  "description": {
+    "en": "Rollouts and updates for distributed binaries and packages.",
+    "cs": "Vydávání a aktualizace distribuovaných binárek a balíčků."
+  }
+}

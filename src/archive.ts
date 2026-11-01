@@ -9,7 +9,7 @@ import { normalizeArchiveEntryPath, safeJoinWithin } from "#paths";
 
 export type ArchiveFormat = "tar.gz" | "zip";
 
-type TarEntryStream = AsyncIterable<unknown> & { resume: () => unknown };
+type TarEntryStream = AsyncIterable<unknown>& { resume: () => unknown };
 
 export async function extractArchive(input: {
     filePath: string;

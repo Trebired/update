@@ -47,6 +47,7 @@ export type UpdateClientConfig = UpdateRuntimeTarget& {
   packageInstaller?: UpdatePackageInstaller;
   allowDowngrade?: boolean;
   allowSameVersion?: boolean;
+  expectedVersion?: string;
   now?: () => Date;
 };
 
@@ -108,6 +109,7 @@ export type StageArtifactInput = {
 export type StageArtifactResult = {
   artifact: UpdateArtifact;
   extractedFiles: string[];
+  payloadRoot: string | null;
   stageDirectory: string;
   stagedBinaryPath: string;
 };

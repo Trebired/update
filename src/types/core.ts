@@ -166,6 +166,9 @@ export type UpdateFetch = (
 export type UpdateActivationTarget = {
   livePath: string;
   fileMode?: number;
+  kind?: "file" | "directory";
+  archiveRoot?: string;
+  preserveOwner?: boolean;
 };
 
 export type UpdateRestartHookContext = {

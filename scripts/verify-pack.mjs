@@ -273,6 +273,6 @@ function restorePackageJsonFromBackup() {
 
 function shellEscape(value) {
   return `'${String(value).replace(/'/gu, `'\\''`)}'`;
-  }
+}
 
-  await main();
+await main();

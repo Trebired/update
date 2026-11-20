@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0
+
+- Added directory activation: an archive artifact activates as a whole directory with `activationTarget.kind: "directory"`, optionally from `archiveRoot` inside the archive, and with `preserveOwner` giving the new directory the previous one's owner.
+- Added `expectedVersion`: a check, prepare or apply pinned to one release refuses a manifest that offers any other version.
+- Changed activation to keep the previous version beside the live path, as `.<name>.<id>.previous`, instead of in the working directory. The swap is a rename on one filesystem even when the working directory is on another disk. Only the latest previous version is kept.
+- Changed archive staging to accept archives with several files and no `binaryPath`; activating one as a single file now fails with a message instead of during staging.
+- Added symbolic and hard links to tar extraction. A symbolic link must be relative and resolve inside the archive, and a hard link must point to a file already extracted; anything else is refused before it is written.
+- Changed tar.gz extraction to stream from disk instead of reading and decompressing the whole archive in memory. Extracting a 131 MB archive of 51,000 files now peaks at about 92 MB of memory.
+- Added `verify:update`, which applies signed file and directory updates in temporary directories, and runs it before publishing.
+
 ## 1.2.4
 
 - Raised the dependency ranges to the current releases: `@trebired/logger-adapter` to `^0.8.2`, `@trebired/result` to `^1.4.1`, `@trebired/utils` to `^0.9.7`.

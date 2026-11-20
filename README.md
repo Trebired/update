@@ -89,6 +89,37 @@ scheduler.start();
 
 `start()` runs one check immediately, then polls on the configured interval. Scheduled runs are single-flight, interval timers are unref'd by default, and background errors are swallowed after `onError` is called. `triggerNow()` still returns the run promise for callers that want to handle success or failure directly.
 
+### Activation Targets
+
+`activationTarget.livePath` is what an update replaces. The new version is first copied beside it, then swapped in with a rename, so the swap never crosses a filesystem even when `workingDirectory` lives on another disk. The previous version stays beside the live path as `.<name>.<id>.previous` until the next update replaces it, and a failed activation or `rollbackActivatedArtifact` puts it back.
+
+A `raw` artifact, or an `archive` artifact with `binaryPath`, replaces one file. An `archive` artifact replaces a whole directory with `kind: "directory"`:
+
+```ts
+await applyUpdate({
+  entity: "primary",
+  currentVersion: "1.4.0",
+  expectedVersion: "1.5.0",
+  os: "linux",
+  arch: "x64",
+  installStrategy: "archive",
+  manifestUrl: "https://downloads.example.com/manifest.json",
+  verificationKeys: [publicKeyPem],
+  workingDirectory: "/var/lib/primary/updates",
+  activationTarget: {
+    kind: "directory",
+    livePath: "/opt/primary/app",
+    archiveRoot: "app",
+    preserveOwner: true,
+  },
+  readInstalledVersion: () => readAppVersion("/opt/primary/app"),
+});
+```
+
+- `archiveRoot` picks the folder inside the archive that becomes the live directory.
+- `preserveOwner` gives the new directory, and everything in it, the owner of the directory it replaces.
+- `expectedVersion` pins the update to one release: a manifest that offers any other version is refused before anything is downloaded.
+
 ### Controller-Managed Rollout
 
 Use rollout planning and instruction helpers when a controller chooses artifacts for many targets while transports stay outside the library:

@@ -43,6 +43,7 @@ async function runCheckFlow(
 
   const fetched = await resolveFetchedManifest(input);
   assertManifestEntity(fetched.manifest, subject);
+  assertExpectedVersion(fetched.manifest, input.expectedVersion);
   await emitManifestFetched(input, operationId, fetched.manifest, fetched.sourceUrl);
 
   return resolveCheckDecision(input, subject, operationId, fetched, selection);
@@ -70,6 +71,13 @@ async function resolveFetchedManifest(input: UpdateCheckInput) {
 function assertManifestEntity(manifest: UpdateManifest, subject: UpdateSubject) {
   if (manifest.entity !== subject.entity) {
     throw new Error(`Manifest ${manifest.entity} does not match runtime ${subject.entity}.`);
+  }
+}
+
+function assertExpectedVersion(manifest: UpdateManifest, expectedVersion: string | undefined) {
+  const expected = String(expectedVersion ?? "").trim();
+  if (expected && manifest.releaseVersion !== expected) {
+    throw new Error(`Release ${expected} is not available; the manifest offers ${manifest.releaseVersion}.`);
   }
 }
 

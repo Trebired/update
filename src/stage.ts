@@ -31,6 +31,7 @@ async function stageRawArtifact(stageDirectory: string, input: StageArtifactInpu
   return {
     artifact: input.artifact,
     extractedFiles: [fileName],
+    payloadRoot: null,
     stageDirectory,
     stagedBinaryPath,
   };
@@ -50,6 +51,7 @@ async function stageArchiveArtifact(stageDirectory: string, input: StageArtifact
   return {
     artifact: input.artifact,
     extractedFiles,
+    payloadRoot: extractedRoot,
     stageDirectory,
     stagedBinaryPath,
   };
@@ -64,5 +66,5 @@ function resolveStagedBinaryPath(artifact: UpdateArtifact, extractedRoot: string
     return safeJoinWithin(extractedRoot, extractedFiles[0]);
   }
 
-  throw new Error(`Archive artifact ${artifact.id} requires binaryPath when multiple files are present.`);
+  return "";
 }

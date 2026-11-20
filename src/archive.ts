@@ -1,6 +1,8 @@
+import { createReadStream, createWriteStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { gunzipSync } from "node:zlib";
+import { pipeline } from "node:stream/promises";
+import { createGunzip } from "node:zlib";
 import { unzipSync } from "fflate";
 import tar from "tar-stream";
 
@@ -70,45 +72,65 @@ export async function listFiles(root: string): Promise<string[]> {
 
 async function extractTarGz(filePath: string, destinationRoot: string): Promise<void> {
   const extract = tar.extract();
-  const buffer = Buffer.from(await readFileBytes(filePath));
-
-  await new Promise<void>((resolve, reject) => {
-      extract.on("entry", (header, stream, next) => {
-          handleTarEntry(destinationRoot, String(header.name ?? ""), String(header.type ??"file"), header.mode ?? 0o644, stream)
-          .then(() => next())
-          .catch (reject);
-      });
-      extract.on("finish", () => resolve());
-      extract.on("error", reject);
-      extract.end(gunzipSync(buffer));
+  extract.on("entry", (header, stream, next) => {
+      handleTarEntry(destinationRoot, {
+          linkname: String(header.linkname ?? ""),
+          mode: header.mode ?? 0o644,
+          name: String(header.name ?? ""),
+          type: String(header.type ??"file"),
+        }, stream)
+      .then(() => next())
+      .catch ((error) => extract.destroy(error));
   });
+  await pipeline(createReadStream(filePath), createGunzip(), extract);
 }
 
-async function handleTarEntry(destinationRoot: string, name: string, type: string, mode: number, stream: TarEntryStream): Promise<void> {
-  const entryPath = normalizeArchiveEntryPath(name);
-  const targetPath = safeJoinWithin(destinationRoot, entryPath);
+type TarEntryHeader = {
+  linkname: string;
+  mode: number;
+  name: string;
+  type: string;
+};
 
-  if (type === "directory") {
+async function handleTarEntry(destinationRoot: string, header: TarEntryHeader, stream: TarEntryStream): Promise<void> {
+  const targetPath = safeJoinWithin(destinationRoot, normalizeArchiveEntryPath(header.name));
+
+  if (header.type === "directory") {
     await ensureDirectory(targetPath);
     stream.resume();
     return;
   }
 
-  if (type !== "file") {
+  if (header.type === "symlink" || header.type === "link") {
     stream.resume();
-    throw new Error(`Unsupported archive entry type: ${type}`);
+    await ensureDirectory(path.dirname(targetPath));
+    await (header.type === "symlink"
+      ? writeSymlink(destinationRoot, targetPath, header.linkname)
+      : writeHardLink(destinationRoot, targetPath, header.linkname));
+    return;
+  }
+
+  if (header.type !== "file") {
+    stream.resume();
+    throw new Error(`Unsupported archive entry type: ${header.type}`);
   }
 
   await ensureDirectory(path.dirname(targetPath));
-  const chunks: Buffer[] = [];
+  await pipeline(stream, createWriteStream(targetPath, { mode: header.mode }));
+}
 
-  for await (const chunk of stream) {
-    chunks.push(Buffer.from(chunk as Uint8Array));
+async function writeSymlink(destinationRoot: string, linkPath: string, linkTarget: string): Promise<void> {
+  if (!linkTarget || path.isAbsolute(linkTarget)) {
+    throw new Error(`Archive symlink ${path.relative(destinationRoot, linkPath)} must point to a relative path.`);
   }
+  const resolved = path.resolve(path.dirname(linkPath), linkTarget);
+  safeJoinWithin(destinationRoot, path.relative(destinationRoot, resolved));
+  await fs.symlink(linkTarget, linkPath);
+}
 
-  await fs.writeFile(targetPath, Buffer.concat(chunks), {
-      mode,
-  });
+async function writeHardLink(destinationRoot: string, linkPath: string, linkTarget: string): Promise<void> {
+  const sourcePath = safeJoinWithin(destinationRoot, normalizeArchiveEntryPath(linkTarget));
+  await fs.copyFile(sourcePath, linkPath);
 }
 
 async function extractZipArchive(filePath: string, destinationRoot: string): Promise<void> {
